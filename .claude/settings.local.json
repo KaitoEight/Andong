@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Process -Name \"mongod\" -ErrorAction SilentlyContinue | Select-Object Name, Id; \\(Get-Command mongod -ErrorAction SilentlyContinue\\).Source)",
+      "PowerShell(Start-Service -Name \"MongoDB\"; Start-Sleep -Seconds 2; \\(Get-Service -Name \"MongoDB\"\\).Status)",
+      "PowerShell(Get-Process mongod -ErrorAction SilentlyContinue)",
+      "PowerShell(& \"C:\\\\Program Files\\\\MongoDB\\\\Server\\\\8.3\\\\bin\\\\mongod.exe\" --dbpath \"e:\\\\Nhakhoa\\\\data\\\\db\" --port 27017 --bind_ip 127.0.0.1 --logpath \"e:\\\\Nhakhoa\\\\data\\\\mongod.log\" --logappend 2>&1)",
+      "PowerShell(& \"C:\\\\Program Files\\\\MongoDB\\\\Server\\\\8.3\\\\bin\\\\mongod.exe\" --config \"C:\\\\Program Files\\\\MongoDB\\\\Server\\\\8.3\\\\bin\\\\mongod.cfg\")",
+      "PowerShell(sc.exe config MongoDB obj= \"LocalSystem\" password= \"\"; Start-Sleep 1; Start-Service MongoDB; Start-Sleep 3; \\(Get-Service MongoDB\\).Status)",
+      "PowerShell(Start-Sleep -Seconds 10; [System.IO.File]::ReadAllText\\(\"C:\\\\Users\\\\lenam\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--Nhakhoa\\\\abd0c984-7ee8-4c50-97fb-14a746250fd6\\\\tasks\\\\bjehfw96k.output\"\\))"
+    ]
+  }
+}

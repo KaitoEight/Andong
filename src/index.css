@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-slate-800 antialiased;
+  }
+}
+
+@layer components {
+  /* Nền trang gradient nhẹ */
+  .app-bg {
+    background:
+      radial-gradient(1200px 600px at 100% -10%, rgba(16, 185, 129, 0.08), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(20, 184, 166, 0.07), transparent 55%),
+      linear-gradient(180deg, #f8fafc 0%, #f8fafc 100%);
+  }
+
+  /* Thẻ chuẩn: bo lớn, viền mảnh, bóng mềm */
+  .card {
+    @apply bg-white rounded-2xl border border-slate-200/70 shadow-sm shadow-slate-200/50;
+  }
+
+  /* Nút gradient chính có quầng sáng */
+  .btn-grad {
+    @apply inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white
+           bg-gradient-to-br from-emerald-500 to-teal-600
+           shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40
+           hover:-translate-y-0.5 active:translate-y-0
+           transition-all duration-200;
+  }
+}
+
+@layer utilities {
+  /* Thanh cuộn mảnh, mềm */
+  .scroll-soft::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scroll-soft::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.25);
+    border-radius: 9999px;
+  }
+  .scroll-soft::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.4); }
+  .scroll-soft::-webkit-scrollbar-track { background: transparent; }
+
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .animate-pop { animation: pop-in 0.18s ease-out both; }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .animate-fade { animation: fade-in 0.15s ease-out both; }
+}

@@ -1,0 +1,14 @@
+# Cấu hình deploy miễn phí trên Render.com
+# Vào https://render.com > New > Blueprint > chọn repo này, Render sẽ đọc file này.
+services:
+  - type: web
+    name: nhakhoa-andong
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm install --prefix server && npm run build
+    startCommand: node server/index.js
+    envVars:
+      - key: MONGODB_URI
+        sync: false        # tự nhập ở dashboard (bí mật)
+      - key: JWT_SECRET
+        sync: false        # tự nhập ở dashboard (bí mật)

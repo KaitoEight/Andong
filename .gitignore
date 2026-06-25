@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.vite/
+
+# Bí mật — KHÔNG đẩy lên GitHub (sẽ khai báo ở dashboard Render)
+server/.env
+
+# Node portable đã kẹp cho Win7 và các gói zip — không cần khi host web
+/node/
+*.zip
