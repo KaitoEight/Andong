@@ -58,6 +58,13 @@ function initFrom(ed) {
     idDate: ed?.idDate || "",
     idPlace: ed?.idPlace || "",
     avatar: ed?.avatar || "",
+    // Tab "Khác"
+    medicalHistory: ed?.medicalHistory || "",
+    allergy: ed?.allergy || "",
+    guardianName: ed?.guardianName || "",
+    guardianPhone: ed?.guardianPhone || "",
+    emergency: ed?.emergency || "",
+    files: ed?.files || [],   // ảnh X-quang / tài liệu: [{name, url}]
     makeAppt: false,
   };
 }
@@ -82,6 +89,20 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
     e.target.value = ""; // cho phép chọn lại cùng 1 file
   };
 
+  const docRef = useRef(null);
+  const pickDocs = async (e) => {
+    const list = Array.from(e.target.files || []);
+    if (!list.length) return;
+    const added = [];
+    for (const file of list) {
+      if (!file.type.startsWith("image/")) continue;
+      try { added.push({ name: file.name, url: await fileToDataUrl(file, 900) }); } catch { /* bỏ qua */ }
+    }
+    if (added.length) setF((p) => ({ ...p, files: [...p.files, ...added] }));
+    e.target.value = "";
+  };
+  const removeDoc = (idx) => setF((p) => ({ ...p, files: p.files.filter((_, i) => i !== idx) }));
+
   const valid = f.name.trim() && f.phone.trim();
 
   const save = () => {
@@ -93,6 +114,9 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
       province: f.province, ward: f.ward, oldCode: f.oldCode, language: f.language,
       note: f.note, idCard: f.idCard, idDate: f.idDate, idPlace: f.idPlace,
       avatar: f.avatar,
+      medicalHistory: f.medicalHistory, allergy: f.allergy,
+      guardianName: f.guardianName, guardianPhone: f.guardianPhone, emergency: f.emergency,
+      files: f.files,
     };
     if (ed) {
       setData({ ...data, customers: data.customers.map((c) => c.id === ed.id ? { ...c, ...fields } : c) });
@@ -212,7 +236,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className={labelCls}>Chi nhánh</label>
-                        <select className={fieldCls} defaultValue="andong"><option value="andong">Nha Khoa An Đông</option></select>
+                        <select className={fieldCls} defaultValue="andong"><option value="andong">Nha Khoa Victoria</option></select>
                       </div>
                       <div>
                         <label className={labelCls}>Nhóm khách hàng</label>
@@ -309,9 +333,70 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
               </div>
             </>
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-10 text-center text-slate-400 text-sm">
-              Thông tin bổ sung (người giám hộ, tiền sử bệnh, dị ứng...) đang được phát triển.
-            </div>
+            <>
+              {/* Y tế */}
+              <div className="bg-white rounded-2xl border border-slate-200/70 p-5">
+                <h3 className="font-semibold text-slate-800 text-sm">Thông tin y tế</h3>
+                <p className="text-xs text-slate-400 mb-4">Tiền sử bệnh, dị ứng, người liên hệ</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className={labelCls}>Tiền sử bệnh</label>
+                    <textarea rows={2} className={fieldCls + " resize-none"} value={f.medicalHistory} onChange={(e) => set("medicalHistory", e.target.value)} placeholder="VD: Tim mạch, tiểu đường, huyết áp..." />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Dị ứng</label>
+                    <textarea rows={2} className={fieldCls + " resize-none"} value={f.allergy} onChange={(e) => set("allergy", e.target.value)} placeholder="VD: Kháng sinh, thuốc tê..." />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className={labelCls}>Người giám hộ</label>
+                    <input className={fieldCls} value={f.guardianName} onChange={(e) => set("guardianName", e.target.value)} placeholder="Họ tên" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>SĐT người giám hộ</label>
+                    <input className={fieldCls} value={f.guardianPhone} onChange={(e) => set("guardianPhone", e.target.value)} placeholder="Số điện thoại" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Liên hệ khẩn cấp</label>
+                    <input className={fieldCls} value={f.emergency} onChange={(e) => set("emergency", e.target.value)} placeholder="Tên / SĐT" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Đính kèm ảnh X-quang / tài liệu */}
+              <div className="bg-white rounded-2xl border border-slate-200/70 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="font-semibold text-slate-800 text-sm">Ảnh X-quang / Tài liệu</h3>
+                    <p className="text-xs text-slate-400">{f.files.length} tệp đính kèm</p>
+                  </div>
+                  <input ref={docRef} type="file" accept="image/*" multiple className="hidden" onChange={pickDocs} />
+                  <button type="button" onClick={() => docRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition">
+                    <Camera size={15} /> Thêm ảnh
+                  </button>
+                </div>
+                {f.files.length === 0 ? (
+                  <div className="text-center text-sm text-slate-400 py-6 border border-dashed border-slate-200 rounded-xl">
+                    Chưa có ảnh. Bấm "Thêm ảnh" để tải phim X-quang, ảnh trong miệng...
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                    {f.files.map((doc, i) => (
+                      <div key={i} className="relative group">
+                        <img src={doc.url} alt={doc.name} className="w-full h-24 object-cover rounded-lg border border-slate-200" />
+                        <button type="button" onClick={() => removeDoc(i)}
+                          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-rose-500 text-white grid place-items-center shadow opacity-0 group-hover:opacity-100 transition">
+                          <X size={13} />
+                        </button>
+                        <div className="text-[10px] text-slate-400 truncate mt-1">{doc.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 

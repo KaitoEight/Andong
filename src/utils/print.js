@@ -1,7 +1,7 @@
 import { fmtVND, fmtDate } from "./helpers";
 
 export const CLINIC = {
-  name: "NHA KHOA AN ĐÔNG",
+  name: "NHA KHOA VICTORIA",
   address: "Số 1, Đường An Dương Vương, Quận 5, TP. Hồ Chí Minh",
   phone: "0901 234 567",
   email: "lienhe@nhakhoaandong.vn",

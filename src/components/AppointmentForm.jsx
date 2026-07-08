@@ -58,16 +58,28 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
   const [custId, setCustId]     = useState(ed?.customerId || initialCustomerId || "");
   const [showResults, setShowResults] = useState(false);
 
-  const [doctor, setDoctor]     = useState(ed?.doctor || "");
+  const [doctors, setDoctors]   = useState(ed?.doctors || (ed?.doctor ? [ed.doctor] : []));
   const [tech, setTech]         = useState(ed?.tech || "");
   const [duration, setDuration] = useState(ed?.mins || 30);
-  const [serviceId, setServiceId] = useState(ed?.serviceId || "");
+  const [serviceIds, setServiceIds] = useState(ed?.serviceIds || (ed?.serviceId ? [ed.serviceId] : []));
   const [tag, setTag]           = useState(ed?.tag || "");
   const [note, setNote]         = useState(ed?.note || "");
   const [dayPart, setDayPart]   = useState("morning");
+  // Tab "Khác"
+  const [deposit, setDeposit]           = useState(String(ed?.deposit ?? ""));
+  const [remind, setRemind]             = useState(ed?.remind ?? true);
+  const [remindBefore, setRemindBefore] = useState(String(ed?.remindBefore ?? "24"));
+  const [source, setSource]             = useState(ed?.source || "");
+  const [internalNote, setInternalNote] = useState(ed?.internalNote || "");
 
-  const doctors = (data.staff || []).filter((s) => s.role === "Bác Sĩ");
+  const doctorOptions = (data.staff || []).filter((s) => s.role === "Bác Sĩ");
   const techs   = (data.staff || []).filter((s) => s.role !== "Bác Sĩ");
+
+  const addDoctor = (name) => { if (name && !doctors.includes(name)) setDoctors([...doctors, name]); };
+  const removeDoctor = (name) => setDoctors(doctors.filter((d) => d !== name));
+  const addService = (id) => { if (id && !serviceIds.includes(id)) setServiceIds([...serviceIds, id]); };
+  const removeService = (id) => setServiceIds(serviceIds.filter((s) => s !== id));
+  const svcName = (id) => data.services.find((s) => s.id === id)?.name || "";
 
   const cust = data.customers.find((c) => c.id === custId);
 
@@ -109,16 +121,17 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
 
   // Cảnh báo trùng giờ bác sĩ
   const conflicts = useMemo(() => {
-    if (!doctor) return [];
+    if (!doctors.length) return [];
     return data.appts.filter((a) => {
       if (a.id === ed?.id) return false;
-      if (a.date !== date || a.doctor !== doctor) return false;
-      if (a.status === "cancelled") return false;
+      if (a.date !== date || a.status === "cancelled") return false;
+      const aDoctors = a.doctors || (a.doctor ? [a.doctor] : []);
+      if (!aDoctors.some((d) => doctors.includes(d))) return false;
       const s = timeToFloat(a.time);
       const e = s + (a.mins || 30) / 60;
       return selStart < e && s < selEnd; // giao nhau
     });
-  }, [data.appts, doctor, date, selStart, selEnd, ed]);
+  }, [data.appts, doctors, date, selStart, selEnd, ed]);
 
   const valid = !!custId;
 
@@ -126,8 +139,10 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
     if (!valid) return;
     const payload = {
       customerId: custId,
-      serviceId,
-      doctor: doctor || (doctors[0]?.name ?? ""),
+      serviceIds,
+      serviceId: serviceIds[0] || "",       // tương thích hiển thị cũ
+      doctors,
+      doctor: doctors[0] || "",             // tương thích hiển thị cũ
       tech,
       date,
       time: hhmm(hour, minute),
@@ -135,6 +150,9 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
       category,
       tag,
       note,
+      deposit: Number(deposit) || 0,
+      remind, remindBefore: Number(remindBefore) || 0,
+      source, internalNote,
     };
     if (ed) {
       setData({ ...data, appts: data.appts.map((a) => a.id === ed.id ? { ...a, ...payload } : a) });
@@ -220,7 +238,7 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                   <span className="text-slate-400">Tổng lịch</span>{" "}
                   <span className="font-semibold text-slate-700">{date.split("-").reverse().join("-")}</span>
                 </div>
-                <div className="text-sm font-medium text-slate-600 mb-2">Nha Khoa An Đông</div>
+                <div className="text-sm font-medium text-slate-600 mb-2">Nha Khoa Victoria</div>
                 <div className="flex gap-2">
                   <button onClick={() => setDayPart("morning")}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${dayPart === "morning" ? "bg-white shadow-sm text-emerald-700 ring-1 ring-emerald-200" : "text-slate-500 hover:bg-white/60"}`}>
@@ -304,14 +322,23 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                     </div>
                   </div>
 
-                  {/* Bác sĩ / KTV / Dự kiến */}
+                  {/* Bác sĩ (nhiều) / KTV / Dự kiến */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                     <div>
-                      <label className={labelCls}>Bác sĩ</label>
-                      <select value={doctor} onChange={(e) => setDoctor(e.target.value)} className={fieldCls}>
-                        <option value="">eg .bác sĩ</option>
-                        {doctors.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
+                      <label className={labelCls}>Bác sĩ <span className="text-slate-400 font-normal">(chọn nhiều)</span></label>
+                      <select value="" onChange={(e) => addDoctor(e.target.value)} className={fieldCls}>
+                        <option value="">+ Thêm bác sĩ</option>
+                        {doctorOptions.filter((d) => !doctors.includes(d.name)).map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
                       </select>
+                      {doctors.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {doctors.map((d) => (
+                            <span key={d} className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium">
+                              {d}<button onClick={() => removeDoctor(d)} className="hover:text-rose-500"><X size={12} /></button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className={labelCls}>Kỹ thuật viên/phụ tá</label>
@@ -328,20 +355,29 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                     </div>
                   </div>
 
-                  {/* Chi nhánh / Dịch vụ / Tag */}
+                  {/* Chi nhánh / Dịch vụ (nhiều) / Tag */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                     <div>
                       <label className={labelCls}>Chi nhánh</label>
-                      <select className={fieldCls} defaultValue="andong">
-                        <option value="andong">Nha Khoa An Đông</option>
+                      <select className={fieldCls} defaultValue="victoria">
+                        <option value="victoria">Nha Khoa Victoria</option>
                       </select>
                     </div>
                     <div>
-                      <label className={labelCls}>Dịch vụ quan tâm</label>
-                      <select value={serviceId} onChange={(e) => setServiceId(e.target.value)} className={fieldCls}>
-                        <option value="">eg .dịch vụ quan tâm</option>
-                        {data.services.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      <label className={labelCls}>Dịch vụ <span className="text-slate-400 font-normal">(chọn nhiều)</span></label>
+                      <select value="" onChange={(e) => addService(e.target.value)} className={fieldCls}>
+                        <option value="">+ Thêm dịch vụ</option>
+                        {data.services.filter((s) => !serviceIds.includes(s.id) && s.active !== false).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </select>
+                      {serviceIds.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {serviceIds.map((id) => (
+                            <span key={id} className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-medium">
+                              {svcName(id)}<button onClick={() => removeService(id)} className="hover:text-rose-500"><X size={12} /></button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className={labelCls}>Tag</label>
@@ -356,8 +392,51 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                   </div>
                 </>
               ) : (
-                <div className="py-10 text-center text-slate-400 text-sm">
-                  Các tuỳ chọn nâng cao (nhắc nhở, đặt cọc, nguồn khách...) đang được phát triển.
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelCls}>Tiền đặt cọc (₫)</label>
+                      <input type="number" min={0} value={deposit} onChange={(e) => setDeposit(e.target.value)} placeholder="0" className={fieldCls} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Nguồn khách</label>
+                      <select value={source} onChange={(e) => setSource(e.target.value)} className={fieldCls}>
+                        <option value="">-- Chọn nguồn --</option>
+                        <option>Khách vãng lai</option>
+                        <option>Giới thiệu</option>
+                        <option>Facebook</option>
+                        <option>Zalo</option>
+                        <option>Google</option>
+                        <option>Khác</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 p-3">
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                      <input type="checkbox" className="w-4 h-4 rounded accent-emerald-600" checked={remind} onChange={(e) => setRemind(e.target.checked)} />
+                      Nhắc lịch hẹn cho khách
+                    </label>
+                    {remind && (
+                      <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+                        <span>Nhắc trước</span>
+                        <select value={remindBefore} onChange={(e) => setRemindBefore(e.target.value)}
+                          className="rounded-lg border border-slate-200 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                          <option value="1">1 giờ</option>
+                          <option value="3">3 giờ</option>
+                          <option value="24">1 ngày</option>
+                          <option value="48">2 ngày</option>
+                          <option value="72">3 ngày</option>
+                        </select>
+                        <span>trước giờ hẹn</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Ghi chú nội bộ <span className="text-slate-400 font-normal">(khách không thấy)</span></label>
+                    <textarea rows={3} value={internalNote} onChange={(e) => setInternalNote(e.target.value)} placeholder="Ghi chú riêng cho nhân viên..." className={fieldCls + " resize-none"} />
+                  </div>
                 </div>
               )}
 
@@ -400,7 +479,7 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
           <div className="mx-6 mb-1 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-sm text-amber-800">
             <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-500" />
             <span>
-              <b>{doctor}</b> đã có {conflicts.length} lịch trùng giờ ngày {date.split("-").reverse().join("-")}:{" "}
+              <b>{doctors.join(", ")}</b> đã có {conflicts.length} lịch trùng giờ ngày {date.split("-").reverse().join("-")}:{" "}
               {conflicts.map((c) => c.time).join(", ")}. Bạn vẫn có thể lưu.
             </span>
           </div>
@@ -411,9 +490,9 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
           {ed && (
             <button
               onClick={() => printAppointment(
-                { ...ed, date, time: hhmm(hour, minute), doctor: doctor || ed.doctor, note },
+                { ...ed, date, time: hhmm(hour, minute), doctor: doctors[0] || ed.doctor, note },
                 cust,
-                data.services.find((s) => s.id === serviceId)?.name
+                serviceIds.map((id) => svcName(id)).filter(Boolean).join(", ")
               )}
               className="mr-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition">
               <Printer size={15} /> In phiếu hẹn

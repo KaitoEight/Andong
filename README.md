@@ -1,4 +1,4 @@
-# Nha Khoa An Đông — Phần mềm quản lý phòng khám
+# Nha Khoa Victoria — Phần mềm quản lý phòng khám
 
 Ứng dụng gồm 2 phần chạy chung trên **một cổng** ở chế độ production:
 - Giao diện React (Vite) đã build → `dist/`

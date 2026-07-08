@@ -41,6 +41,21 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
   registerAdd(() => { setForm(blankForm); setShowAdd(true); });
 
   const cust = (id) => data.customers.find((c) => c.id === id);
+  const svc  = (id) => data.services.find((s) => s.id === id);
+
+  // Lịch hẹn đã hoàn thành của khách đang chọn (để tạo hoá đơn từ dịch vụ đã làm)
+  const doneAppts = (data.appts || []).filter(
+    (a) => a.customerId === form.customerId && a.status === "done"
+  );
+  const apptServiceIds = (a) => (a.serviceIds && a.serviceIds.length ? a.serviceIds : (a.serviceId ? [a.serviceId] : []));
+  const importAppt = (a) => {
+    const items = apptServiceIds(a).map((id) => {
+      const s = svc(id);
+      return { name: s?.name || "Dịch vụ", qty: 1, price: s?.price || 0 };
+    });
+    if (!items.length) return;
+    setForm((f) => ({ ...f, items: [...f.items.filter((it) => it.name.trim()), ...items] }));
+  };
 
   const list = useMemo(() => {
     const ql = q.trim().toLowerCase();
@@ -230,6 +245,26 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
               {data.customers.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.phone}</option>)}
             </select>
           </Field>
+
+          {/* Lịch hẹn đã hoàn thành → nhập nhanh dịch vụ */}
+          {doneAppts.length > 0 && (
+            <div className="mb-3 rounded-xl border border-emerald-100 bg-emerald-50/50 p-2.5">
+              <div className="text-xs font-semibold text-emerald-700 mb-1.5">Lịch hẹn đã hoàn thành — bấm để thêm vào hoá đơn</div>
+              <div className="space-y-1.5">
+                {doneAppts.map((a) => {
+                  const names = apptServiceIds(a).map((id) => svc(id)?.name).filter(Boolean).join(", ");
+                  const total = apptServiceIds(a).reduce((sum, id) => sum + (svc(id)?.price || 0), 0);
+                  return (
+                    <button key={a.id} onClick={() => importAppt(a)}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-left hover:border-emerald-400 transition">
+                      <span className="text-sm text-slate-700 truncate">{fmtDate(a.date)} · {names || "—"}</span>
+                      <span className="text-xs font-medium text-emerald-700 shrink-0">+ {fmtVND(total)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Line items */}
           <div className="mb-3">

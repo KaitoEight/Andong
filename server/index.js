@@ -30,6 +30,6 @@ const PORT = process.env.PORT || 3001;
 
 connectDB()
   .then(() => app.listen(PORT, () => {
-    console.log(`\n✅ Nha Khoa An Đông đang chạy: http://localhost:${PORT}\n`);
+    console.log(`\n✅ Nha Khoa Victoria đang chạy: http://localhost:${PORT}\n`);
   }))
   .catch((err) => { console.error("Không thể kết nối MongoDB:", err.message); process.exit(1); });

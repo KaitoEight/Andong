@@ -28,7 +28,7 @@ export default function Sidebar({ view, setView, user, onLogout, perms, realRole
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-slate-200/70">
         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white grid place-items-center font-bold text-lg shrink-0 shadow-lg shadow-emerald-500/30">N</div>
         <div>
-          <div className="font-bold text-slate-800 leading-tight text-sm">Nha Khoa An Đông</div>
+          <div className="font-bold text-slate-800 leading-tight text-sm">Nha Khoa Victoria</div>
           <div className="text-[10px] text-slate-400 uppercase tracking-wide">Quản lý phòng khám</div>
         </div>
       </div>

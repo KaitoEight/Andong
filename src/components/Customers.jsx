@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Phone, MapPin, Cake, Pencil } from "lucide-react";
+import { Search, Phone, MapPin, Cake, Pencil, Trash2, HeartPulse, ImageIcon } from "lucide-react";
 import Badge from "./ui/Badge";
 import Avatar from "./ui/Avatar";
 import Odontogram from "./Odontogram";
@@ -15,6 +15,11 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit 
   const svc = (id) => data.services.find((s) => s.id === id);
   const updateTeeth = (teeth) =>
     setData?.({ ...data, customers: data.customers.map((c) => c.id === sel ? { ...c, teeth } : c) });
+  const removeCustomer = (c) => {
+    if (!window.confirm(`Xoá khách hàng "${c.name}"? Hành động này không thể hoàn tác.`)) return;
+    setData?.({ ...data, customers: data.customers.filter((x) => x.id !== c.id) });
+    setSel(null);
+  };
 
   const list = data.customers.filter((c) =>
     (c.name + c.phone + c.code).toLowerCase().includes(q.toLowerCase())
@@ -85,6 +90,10 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit 
                     className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition">
                     <Pencil size={15} />
                   </button>
+                  <button onClick={() => removeCustomer(selCust)} title="Xoá khách hàng"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition">
+                    <Trash2 size={15} />
+                  </button>
                 </div>
               </div>
               <div className="mt-4 grid sm:grid-cols-2 gap-y-2 text-sm">
@@ -96,6 +105,41 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit 
                 <p className="mt-3 text-sm bg-amber-50 text-amber-800 rounded-lg px-3 py-2">Ghi chú: {selCust.note}</p>
               )}
             </div>
+
+            {(selCust.allergy || selCust.medicalHistory || selCust.guardianName || selCust.emergency) && (
+              <div className="card p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <HeartPulse size={15} className="text-rose-500" />
+                  <span className="font-medium text-slate-700 text-sm">Thông tin y tế</span>
+                </div>
+                {selCust.allergy && (
+                  <div className="mb-2 text-sm bg-rose-50 text-rose-700 rounded-lg px-3 py-2">
+                    <b>⚠ Dị ứng:</b> {selCust.allergy}
+                  </div>
+                )}
+                <div className="grid sm:grid-cols-2 gap-y-1 gap-x-4 text-sm text-slate-600">
+                  {selCust.medicalHistory && <div><span className="text-slate-400">Tiền sử:</span> {selCust.medicalHistory}</div>}
+                  {selCust.guardianName && <div><span className="text-slate-400">Người giám hộ:</span> {selCust.guardianName} {selCust.guardianPhone && `· ${selCust.guardianPhone}`}</div>}
+                  {selCust.emergency && <div><span className="text-slate-400">Liên hệ khẩn:</span> {selCust.emergency}</div>}
+                </div>
+              </div>
+            )}
+
+            {selCust.files?.length > 0 && (
+              <div className="card p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <ImageIcon size={15} className="text-sky-500" />
+                  <span className="font-medium text-slate-700 text-sm">Ảnh X-quang / Tài liệu ({selCust.files.length})</span>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                  {selCust.files.map((doc, i) => (
+                    <a key={i} href={doc.url} target="_blank" rel="noreferrer" title={doc.name}>
+                      <img src={doc.url} alt={doc.name} className="w-full h-20 object-cover rounded-lg border border-slate-200 hover:ring-2 hover:ring-emerald-400 transition" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="card p-5">
               <div className="font-medium text-slate-700 text-sm mb-3">Sơ đồ răng</div>

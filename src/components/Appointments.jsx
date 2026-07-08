@@ -300,10 +300,19 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
 
                     {/* Nội dung */}
                     <td className="px-4 py-3">
-                      <div className="font-semibold text-slate-800">{s?.group}</div>
-                      <div className="text-slate-600">{s?.name}</div>
-                      {a.note && <div className="text-xs text-slate-400 mt-0.5">{a.note}</div>}
-                      {s?.price > 0 && <div className="text-xs text-emerald-600 mt-0.5">{fmtVND(s.price)}</div>}
+                      {(() => {
+                        const ids = a.serviceIds && a.serviceIds.length ? a.serviceIds : (a.serviceId ? [a.serviceId] : []);
+                        const svcs = ids.map((id) => svc(id)).filter(Boolean);
+                        const total = svcs.reduce((sum, x) => sum + (x.price || 0), 0);
+                        return (
+                          <>
+                            <div className="font-semibold text-slate-800">{svcs[0]?.group || a.category || "—"}</div>
+                            <div className="text-slate-600">{svcs.map((x) => x.name).join(", ") || "—"}</div>
+                            {a.note && <div className="text-xs text-slate-400 mt-0.5">{a.note}</div>}
+                            {total > 0 && <div className="text-xs text-emerald-600 mt-0.5">{fmtVND(total)}</div>}
+                          </>
+                        );
+                      })()}
                     </td>
 
                     {/* Trạng thái */}

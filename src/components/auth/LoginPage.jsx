@@ -26,7 +26,7 @@ export default function LoginPage({ onLogin, onGoRegister }) {
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white grid place-items-center font-bold text-2xl mb-3">N</div>
-          <h1 className="text-xl font-semibold text-slate-900">Nha Khoa An Đông</h1>
+          <h1 className="text-xl font-semibold text-slate-900">Nha Khoa Victoria</h1>
           <p className="text-sm text-slate-500 mt-1">Đăng nhập để tiếp tục</p>
         </div>
 

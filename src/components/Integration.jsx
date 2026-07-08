@@ -3,8 +3,8 @@ import { fmtDate } from "../utils/helpers";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 const MOCK_SMS = [
-  { id: 1, customer: "Trương Trung Vĩ",  type: "ZNS",  message: "Nhắc lịch hẹn ngày 14/06/2026 lúc 09:00 - Trám răng thẩm mỹ tại Nha Khoa An Đông.", date: "2026-06-13", status: "sent"  },
-  { id: 2, customer: "Nguyễn Thị Mai",   type: "SMS",  message: "Chúc mừng sinh nhật! Nha Khoa An Đông tặng bạn voucher giảm 10% cho lần khám tiếp theo.", date: "2026-06-10", status: "sent"  },
+  { id: 1, customer: "Trương Trung Vĩ",  type: "ZNS",  message: "Nhắc lịch hẹn ngày 14/06/2026 lúc 09:00 - Trám răng thẩm mỹ tại Nha Khoa Victoria.", date: "2026-06-13", status: "sent"  },
+  { id: 2, customer: "Nguyễn Thị Mai",   type: "SMS",  message: "Chúc mừng sinh nhật! Nha Khoa Victoria tặng bạn voucher giảm 10% cho lần khám tiếp theo.", date: "2026-06-10", status: "sent"  },
   { id: 3, customer: "Lê Hoàng Phúc",    type: "ZNS",  message: "Xác nhận lịch hẹn ngày 13/06/2026. Vui lòng đến trước 15 phút.", date: "2026-06-13", status: "sent"  },
   { id: 4, customer: "Trương Trung Vĩ",  type: "SMS",  message: "Cảm ơn bạn đã sử dụng dịch vụ. Phản hồi chất lượng tại: nhakoaandong.vn/feedback", date: "2026-06-05", status: "error" },
   { id: 5, customer: "Nguyễn Thị Mai",   type: "ZNS",  message: "Nhắc lịch tái khám sau điều trị cạo vôi. Vui lòng liên hệ để đặt lịch.", date: "2026-06-01", status: "sent"  },
