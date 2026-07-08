@@ -166,12 +166,13 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                   <div className="flex items-center gap-5">
                     {["Nam", "Nữ"].map((g) => (
-                      <label key={g} className="flex items-center gap-2 cursor-pointer">
+                      <button type="button" key={g} onClick={() => set("gender", g)}
+                        className="flex items-center gap-2 cursor-pointer">
                         <span className={`w-4 h-4 rounded-full border-2 grid place-items-center transition ${f.gender === g ? "border-emerald-500" : "border-slate-300"}`}>
                           {f.gender === g && <span className="w-2 h-2 rounded-full bg-emerald-500" />}
                         </span>
                         <span className={`text-sm ${f.gender === g ? "text-slate-800 font-medium" : "text-slate-500"}`}>{g}</span>
-                      </label>
+                      </button>
                     ))}
                     {!ed && (
                       <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600">

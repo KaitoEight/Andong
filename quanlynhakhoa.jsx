@@ -68,6 +68,15 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, [view]);
 
+  // "Tạo Mới" (Khách Hàng) mở thẳng form thêm khách, nền là danh sách
+  useEffect(() => {
+    if (view === "customer-new") {
+      setEditCust(null);
+      setAdding("customer");
+      setView("customers");
+    }
+  }, [view]);
+
   const registerAdd = (fn) => { addRef.current = fn; };
 
   const handleLogin = (loggedInUser) => { setUser(loggedInUser); setData(null); setView(DEFAULT_VIEW); setPreviewRole(null); };
