@@ -45,7 +45,7 @@ function inSlot(time, slot) {
   return time >= slot.from && time < slot.to;
 }
 
-export default function Appointments({ data, setData, openAdd, registerAdd, onEdit }) {
+export default function Appointments({ data, setData, openAdd, registerAdd, onEdit, onOpenCustomer }) {
   const [date, setDate]             = useState(todayStr());
   const [activeSlot, setActiveSlot] = useState(null);
   const [q, setQ]                   = useState("");
@@ -258,13 +258,35 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
                     </td>
 
                     <td className="p-3">
-                      <span className="font-mono text-emerald-700 font-semibold">{c?.code || "—"}</span>
+                      {c ? (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); onOpenCustomer?.(c.id); }}
+                          className="font-mono text-emerald-700 font-bold hover:underline"
+                          title="Xem hồ sơ khách hàng"
+                        >
+                          {c.code}
+                        </button>
+                      ) : (
+                        <span className="font-mono text-slate-400">—</span>
+                      )}
                     </td>
 
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <Avatar src={c?.avatar} name={c?.name} size={30} />
-                        <span className="font-bold text-slate-800">{c?.name || "Vắng tên"}</span>
+                        {c ? (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onOpenCustomer?.(c.id); }}
+                            className="font-bold text-slate-800 hover:text-emerald-600 hover:underline text-left"
+                            title="Xem hồ sơ khách hàng"
+                          >
+                            {c.name}
+                          </button>
+                        ) : (
+                          <span className="font-bold text-slate-800">Vắng tên</span>
+                        )}
                       </div>
                     </td>
 

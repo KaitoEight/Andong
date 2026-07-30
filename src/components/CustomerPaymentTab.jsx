@@ -1,21 +1,14 @@
 import { useState, useMemo } from "react";
 import {
-  Plus, Printer, Wallet, CreditCard, QrCode, CheckCircle2, ArrowUpRight,
-  Receipt, FileText, Calendar, DollarSign, Sparkles, X, ChevronRight
+  Plus, Printer, Wallet, CreditCard, CheckCircle2,
+  Receipt, Trash2, Building2
 } from "lucide-react";
 import Modal from "./ui/Modal";
 import Field, { inputCls, btnPrimary } from "./ui/Field";
 import { uid, todayStr, fmtDate, fmtVND } from "../utils/helpers";
 
-const BANK_CONFIG = {
-  bankId: "MB",           // MB Bank / Vietinbank / Vietcombank
-  accountNo: "0336699387", // STK mẫu phòng khám
-  accountName: "Lê Nam Hưng",
-};
-
 export default function CustomerPaymentTab({ data, setData, customer }) {
-  const [modal, setModal] = useState(false);
-  const [qrModal, setQrModal] = useState(null); // { amount, content, qrUrl }
+  const [modal, setModal]           = useState(false);
   const [printModal, setPrintModal] = useState(null); // { invoice }
 
   const invoices = useMemo(() =>
@@ -26,24 +19,18 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
 
   const custServices = customer.services || [];
   const servicesTotal = custServices.reduce((s, r) => s + (r.total || 0), 0);
-  const invoiceTotal = invoices.reduce((s, i) => s + (i.total || 0), 0);
-  const totalBilled = servicesTotal || invoiceTotal;
-  const totalPaid = invoices.reduce((s, i) => s + (i.paid || 0), 0);
-  const totalDebt = Math.max(0, totalBilled - totalPaid);
+  const invoiceTotal  = invoices.reduce((s, i) => s + (i.total || 0), 0);
+  const totalBilled   = servicesTotal || invoiceTotal;
+  const totalPaid     = invoices.reduce((s, i) => s + (i.paid || 0), 0);
+  const totalDebt     = Math.max(0, totalBilled - totalPaid);
 
   // Form Lập Phiếu Thu
   const [form, setForm] = useState({
     amount: "",
-    method: "Chuyển khoản VietQR",
+    method: "Chuyển khoản",
     staff: data.staff?.[0]?.name || "Lễ tân",
     note: "Thanh toán chi phí dịch vụ nha khoa",
   });
-
-  const generateVietQRUrl = (amount, info) => {
-    const amt = Number(amount) || 0;
-    const addInfo = encodeURIComponent(info || `THANH TOAN KH ${customer.code}`);
-    return `https://img.vietqr.io/image/${BANK_CONFIG.bankId}-${BANK_CONFIG.accountNo}-compact2.png?amount=${amt}&addInfo=${addInfo}&accountName=${encodeURIComponent(BANK_CONFIG.accountName)}`;
-  };
 
   const handleSavePayment = () => {
     const paidAmt = Number(form.amount) || 0;
@@ -75,12 +62,11 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
     setForm({ ...form, amount: "" });
   };
 
-  const openQrForInvoice = (inv) => {
-    const qrUrl = generateVietQRUrl(inv.paid, `THANH TOAN HOADON ${inv.code}`);
-    setQrModal({
-      amount: inv.paid,
-      code: inv.code,
-      qrUrl,
+  const handleDeletePayment = (inv) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xoá phiếu thu thanh toán "${inv.code}"?`)) return;
+    setData({
+      ...data,
+      invoices: (data.invoices || []).filter((i) => i.id !== inv.id),
     });
   };
 
@@ -122,14 +108,14 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
       <div className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="font-bold text-slate-900 text-base font-heading">Lịch Sử & Phiếu Thu Thanh Toán</h3>
-          <p className="text-xs text-slate-500">Quản lý các đợt thu tiền, tạo mã VietQR thanh toán và in phiếu thu</p>
+          <p className="text-xs text-slate-500">Quản lý các đợt thu tiền, in phiếu thu và xoá đợt thanh toán</p>
         </div>
 
         <div className="flex items-center gap-2">
           {totalDebt > 0 && (
             <button onClick={() => { setForm((f) => ({ ...f, amount: String(totalDebt) })); setModal(true); }}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition shadow-sm">
-              <QrCode size={15} /> Thu Nợ ({fmtVND(totalDebt)})
+              <Wallet size={15} /> Thu Nợ ({fmtVND(totalDebt)})
             </button>
           )}
 
@@ -151,7 +137,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
               <th className="p-3 font-bold text-slate-500">Hình Thức Thanh Toán</th>
               <th className="p-3 text-right font-bold text-slate-500">Số Tiền Thu</th>
               <th className="p-3 font-bold text-slate-500">Người Thu</th>
-              <th className="p-3 text-center w-28 font-bold text-slate-500">Thao tác</th>
+              <th className="p-3 text-center w-24 font-bold text-slate-500">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -172,7 +158,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
                   <td className="p-3 font-semibold text-slate-700">{fmtDate(inv.date)} {inv.time || ""}</td>
                   <td className="p-3">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                      {inv.method?.includes("QR") ? <QrCode size={13} className="text-emerald-600" /> : <CreditCard size={13} className="text-sky-600" />}
+                      <CreditCard size={13} className="text-emerald-600" />
                       {inv.method || "Tiền mặt"}
                     </span>
                   </td>
@@ -182,13 +168,13 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
                   <td className="p-3 font-medium text-slate-600">{inv.staff || "Lễ tân"}</td>
                   <td className="p-3 text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => openQrForInvoice(inv)} title="Mở mã VietQR"
-                        className="w-7 h-7 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition grid place-items-center">
-                        <QrCode size={15} />
-                      </button>
                       <button onClick={() => setPrintModal({ invoice: inv })} title="In phiếu thu"
                         className="w-7 h-7 rounded-lg text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition grid place-items-center">
                         <Printer size={15} />
+                      </button>
+                      <button onClick={() => handleDeletePayment(inv)} title="Xoá đợt thanh toán này"
+                        className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center">
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </td>
@@ -221,26 +207,11 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
 
             <Field label="Hình thức thanh toán">
               <select value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value })} className={inputCls}>
-                <option value="Chuyển khoản VietQR">Chuyển khoản VietQR (Ngân hàng)</option>
+                <option value="Chuyển khoản">Chuyển khoản ngân hàng</option>
                 <option value="Tiền mặt">Tiền mặt tại quầy</option>
                 <option value="Quẹt thẻ POS">Quẹt thẻ ngân hàng (POS)</option>
               </select>
             </Field>
-
-            {form.method === "Chuyển khoản VietQR" && Number(form.amount) > 0 && (
-              <div className="p-4 rounded-2xl bg-slate-900 text-white text-center space-y-2">
-                <div className="text-xs font-bold text-emerald-400">Mã VietQR Quét Nhanh Chuyển Khoản</div>
-                <img
-                  src={generateVietQRUrl(form.amount, `THANH TOAN KH ${customer.code}`)}
-                  alt="VietQR Code"
-                  className="w-44 h-44 object-contain mx-auto rounded-xl border-2 border-white shadow-md"
-                />
-                <div className="text-[11px] text-slate-300">
-                  Chủ tài khoản: <b>{BANK_CONFIG.accountName}</b> <br />
-                  STK: <b className="font-mono text-emerald-400">{BANK_CONFIG.accountNo}</b> ({BANK_CONFIG.bankId})
-                </div>
-              </div>
-            )}
 
             <Field label="Người thu tiền">
               <select value={form.staff} onChange={(e) => setForm({ ...form, staff: e.target.value })} className={inputCls}>
@@ -255,17 +226,6 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
             <button onClick={handleSavePayment} className={btnPrimary + " w-full justify-center py-3 text-sm font-bold"}>
               <CheckCircle2 size={18} /> Lưu Phiếu Thu Thanh Toán
             </button>
-          </div>
-        </Modal>
-      )}
-
-      {/* Modal VietQR Xem Nhanh */}
-      {qrModal && (
-        <Modal title={`Mã VietQR Thanh Toán - Hóa Đơn ${qrModal.code}`} onClose={() => setQrModal(null)}>
-          <div className="text-center space-y-4 py-2">
-            <div className="text-sm font-bold text-slate-800">Số tiền: <span className="text-emerald-600 text-lg">{fmtVND(qrModal.amount)}</span></div>
-            <img src={qrModal.qrUrl} alt="VietQR" className="w-56 h-56 object-contain mx-auto rounded-2xl border-2 border-slate-200 shadow-lg" />
-            <p className="text-xs text-slate-500">Bệnh nhân sử dụng ứng dụng Ngân hàng (MB, Vietcombank, Techcombank, Agribank, ZaloPay...) quét mã để thanh toán.</p>
           </div>
         </Modal>
       )}

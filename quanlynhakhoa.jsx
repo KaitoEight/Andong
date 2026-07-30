@@ -190,7 +190,7 @@ export default function App() {
 
       // ── Lịch Hẹn ──────────────────────────────────────────────────────────
       case "appt-today":
-        return <Appointments data={safeData} setData={setData} openAdd={setAdding} registerAdd={registerAdd} onEdit={setEditAppt} />;
+        return <Appointments data={safeData} setData={setData} openAdd={setAdding} registerAdd={registerAdd} onEdit={setEditAppt} onOpenCustomer={openCustomer} />;
       case "appt-calendar":
         return <CalendarView data={safeData} setData={setData} />;
       case "appt-doctor":
