@@ -43,18 +43,13 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
   const cust = (id) => data.customers.find((c) => c.id === id);
   const svc  = (id) => data.services.find((s) => s.id === id);
 
-  // Lịch hẹn đã hoàn thành của khách đang chọn (để tạo hoá đơn từ dịch vụ đã làm)
-  const doneAppts = (data.appts || []).filter(
-    (a) => a.customerId === form.customerId && a.status === "done"
-  );
-  const apptServiceIds = (a) => (a.serviceIds && a.serviceIds.length ? a.serviceIds : (a.serviceId ? [a.serviceId] : []));
-  const importAppt = (a) => {
-    const items = apptServiceIds(a).map((id) => {
-      const s = svc(id);
-      return { name: s?.name || "Dịch vụ", qty: 1, price: s?.price || 0 };
-    });
-    if (!items.length) return;
-    setForm((f) => ({ ...f, items: [...f.items.filter((it) => it.name.trim()), ...items] }));
+  // Dịch vụ đã chốt của khách đang chọn (nguồn để lập hoá đơn thu tiền)
+  const custServices = (cust(form.customerId)?.services) || [];
+  const importService = (r) => {
+    setForm((f) => ({
+      ...f,
+      items: [...f.items.filter((it) => it.name.trim()), { name: r.name || "Dịch vụ", qty: 1, price: r.total || 0 }],
+    }));
   };
 
   const list = useMemo(() => {
@@ -246,19 +241,17 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
             </select>
           </Field>
 
-          {/* Lịch hẹn đã hoàn thành → nhập nhanh dịch vụ */}
-          {doneAppts.length > 0 && (
+          {/* Dịch vụ đã chốt → nhập nhanh vào hoá đơn */}
+          {custServices.length > 0 && (
             <div className="mb-3 rounded-xl border border-emerald-100 bg-emerald-50/50 p-2.5">
-              <div className="text-xs font-semibold text-emerald-700 mb-1.5">Lịch hẹn đã hoàn thành — bấm để thêm vào hoá đơn</div>
+              <div className="text-xs font-semibold text-emerald-700 mb-1.5">Dịch vụ đã chốt — bấm để thêm vào hoá đơn</div>
               <div className="space-y-1.5">
-                {doneAppts.map((a) => {
-                  const names = apptServiceIds(a).map((id) => svc(id)?.name).filter(Boolean).join(", ");
-                  const total = apptServiceIds(a).reduce((sum, id) => sum + (svc(id)?.price || 0), 0);
+                {custServices.map((r) => {
                   return (
-                    <button key={a.id} onClick={() => importAppt(a)}
+                    <button key={r.id} onClick={() => importService(r)}
                       className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-left hover:border-emerald-400 transition">
-                      <span className="text-sm text-slate-700 truncate">{fmtDate(a.date)} · {names || "—"}</span>
-                      <span className="text-xs font-medium text-emerald-700 shrink-0">+ {fmtVND(total)}</span>
+                      <span className="text-sm text-slate-700 truncate">{fmtDate(r.date)} · {r.name}</span>
+                      <span className="text-xs font-medium text-emerald-700 shrink-0">+ {fmtVND(r.total)}</span>
                     </button>
                   );
                 })}

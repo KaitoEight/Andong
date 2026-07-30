@@ -1,188 +1,283 @@
-import { useState } from "react";
-import { Search, Phone, MapPin, Cake, Pencil, Trash2, HeartPulse, ImageIcon } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+  Search, Phone, MapPin, Cake, Pencil, Trash2, HeartPulse, ImageIcon,
+  FileText, CalendarCheck, Wallet, Receipt, X, Plus, ChevronLeft, ArrowUpDown,
+  CalendarDays, Stethoscope, Activity, CreditCard, ChevronRight, UserPlus
+} from "lucide-react";
 import Badge from "./ui/Badge";
 import Avatar from "./ui/Avatar";
 import Odontogram from "./Odontogram";
-import { inputCls } from "./ui/Field";
-import { fmtDate, ageFrom } from "../utils/helpers";
+import { inputCls, btnPrimary } from "./ui/Field";
+import { fmtDate, ageFrom, fmtVND, toLocalISODate } from "../utils/helpers";
 
-export default function Customers({ data, setData, openAdd, registerAdd, onEdit }) {
-  const [q, setQ] = useState("");
-  const [sel, setSel] = useState(null);
+const tr = (n) => (n / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 2 }) + " Tr";
+const trieu = (n) => (n >= 1e6 ? (n / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 2 }) + " triệu" : (n || 0).toLocaleString("vi-VN") + " đ");
+
+const TABS = [
+  { key: "profile", label: "Tất cả hồ sơ", icon: FileText },
+  { key: "appt",    label: "Có Lịch hẹn",   icon: CalendarDays },
+  { key: "service", label: "Sử dụng Dịch vụ", icon: Stethoscope },
+  { key: "treat",   label: "Đang Điều trị", icon: Activity },
+  { key: "pay",     label: "Có Thanh toán", icon: CreditCard },
+];
+const RANGES = [
+  { key: "all", label: "Tất cả thời gian", days: 0 },
+  { key: "m1",  label: "1 Tháng gần nhất", days: 30 },
+  { key: "m3",  label: "3 Tháng gần nhất", days: 90 },
+  { key: "y1",  label: "1 Năm gần nhất",  days: 365 },
+];
+
+export default function Customers({ data, setData, openAdd, registerAdd, onEdit, onOpenCustomer }) {
+  const [q, setQ]           = useState("");
+  const [tab, setTab]       = useState("profile");
+  const [range, setRange]   = useState("all");
+  const [source, setSource] = useState("all");
+  const [limit, setLimit]   = useState(20);
+  const [sel, setSel]       = useState(null);
+  const [full, setFull]     = useState(false);
 
   registerAdd(() => openAdd("customer"));
 
   const svc = (id) => data.services.find((s) => s.id === id);
+  const invoices = data.invoices || [];
+  const apptsOf   = (id) => data.appts.filter((a) => a.customerId === id);
+  const invOf     = (id) => invoices.filter((i) => i.customerId === id);
+
+  const stats = useMemo(() => ({
+    total:     data.customers.length,
+    checkedIn: data.appts.filter((a) => a.status === "arrived" || a.status === "done").length,
+    apptTotal: data.appts.length,
+    billed:    invoices.reduce((s, i) => s + (i.total || 0), 0),
+    collected: invoices.reduce((s, i) => s + (i.paid || 0), 0),
+  }), [data.customers, data.appts, invoices]);
+
+  const sources = useMemo(
+    () => [...new Set(data.customers.map((c) => c.source).filter(Boolean))],
+    [data.customers]
+  );
+
+  const fromStr = useMemo(() => {
+    const days = RANGES.find((r) => r.key === range)?.days || 0;
+    if (!days) return null;
+    const d = new Date(); d.setDate(d.getDate() - days);
+    return toLocalISODate(d);
+  }, [range]);
+
+  const list = useMemo(() => {
+    const ql = q.trim().toLowerCase();
+    const inRange = (dateStr) => !fromStr || (dateStr && dateStr >= fromStr);
+    return data.customers.filter((c) => {
+      if (ql && !(c.name + c.phone + c.code).toLowerCase().includes(ql)) return false;
+      if (source !== "all" && (c.source || "") !== source) return false;
+      const appts = apptsOf(c.id);
+      switch (tab) {
+        case "appt":    if (!appts.some((a) => inRange(a.date))) return false; break;
+        case "service": if (!appts.some((a) => inRange(a.date) && ((a.serviceIds && a.serviceIds.length) || a.serviceId))) return false; break;
+        case "treat":   if (!(appts.some((a) => a.status === "done" && inRange(a.date)) || (c.teeth && Object.keys(c.teeth).length))) return false; break;
+        case "pay":     if (!invOf(c.id).some((i) => inRange(i.date))) return false; break;
+        default: break;
+      }
+      return true;
+    });
+  }, [data.customers, q, source, tab, fromStr, data.appts, invoices]);
+
+  const shown = limit ? list.slice(0, limit) : list;
+
+  const selCust   = data.customers.find((c) => c.id === sel);
+  const histAppts = selCust ? apptsOf(sel).slice().sort((a, b) => b.date.localeCompare(a.date)) : [];
+  const histCare  = selCust ? data.care.filter((c) => c.customerId === sel) : [];
+
+  const svcNames = (a) => {
+    const ids = a.serviceIds && a.serviceIds.length ? a.serviceIds : (a.serviceId ? [a.serviceId] : []);
+    return { names: ids.map((id) => svc(id)?.name).filter(Boolean).join(", ") || "Dịch vụ", total: ids.reduce((s, id) => s + (svc(id)?.price || 0), 0) };
+  };
+  const selInv    = selCust ? invOf(sel) : [];
+  const selBilled = selInv.reduce((s, i) => s + (i.total || 0), 0);
+  const selPaid   = selInv.reduce((s, i) => s + (i.paid || 0), 0);
+
+  const recent = selCust ? [
+    ...selInv.map((i) => ({ type: "inv", date: i.date, label: i.code, amount: i.total })),
+    ...apptsOf(sel).filter((a) => a.status === "done").map((a) => { const s = svcNames(a); return { type: "appt", date: a.date, label: s.names, amount: s.total }; }),
+  ].sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 8) : [];
+
   const updateTeeth = (teeth) =>
     setData?.({ ...data, customers: data.customers.map((c) => c.id === sel ? { ...c, teeth } : c) });
+
   const removeCustomer = (c) => {
     if (!window.confirm(`Xoá khách hàng "${c.name}"? Hành động này không thể hoàn tác.`)) return;
     setData?.({ ...data, customers: data.customers.filter((x) => x.id !== c.id) });
     setSel(null);
+    setFull(false);
   };
 
-  const list = data.customers.filter((c) =>
-    (c.name + c.phone + c.code).toLowerCase().includes(q.toLowerCase())
+  const StatCard = ({ icon: Icon, label, value, sub, grad = "from-emerald-500 to-teal-600" }) => (
+    <div className="card p-4 hover:-translate-y-0.5 transition-all">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-500">{label}</span>
+        <span className={`w-9 h-9 rounded-xl bg-gradient-to-br ${grad} text-white grid place-items-center shadow-md`}>
+          <Icon size={18} />
+        </span>
+      </div>
+      <div className="mt-2 text-2xl font-extrabold text-slate-900 font-heading">{value}</div>
+      {sub && <div className="text-[11px] text-slate-400 font-medium mt-1">{sub}</div>}
+    </div>
   );
-  const selCust  = data.customers.find((c) => c.id === sel);
-  const histAppts = data.appts.filter((a) => a.customerId === sel);
-  const histCare  = data.care.filter((c) => c.customerId === sel);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4">
-      {/* Danh sách */}
-      <div className="lg:w-96 shrink-0">
-        <div className="relative mb-3">
-          <Search size={16} className="absolute left-3 top-2.5 text-slate-400" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Tìm theo tên, SĐT, mã KH"
-            className={inputCls + " pl-9"}
-          />
-        </div>
-        <ul className="card divide-y divide-slate-50 max-h-[70vh] overflow-y-auto">
-          {list.map((c) => (
-            <li key={c.id}>
-              <button
-                onClick={() => setSel(c.id)}
-                className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition flex items-center gap-3 ${sel === c.id ? "bg-emerald-50/60" : ""}`}
-              >
-                <Avatar src={c.avatar} name={c.name} size={36} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-slate-800 text-sm truncate">{c.name}</span>
-                    <span className="text-[11px] text-emerald-600 font-mono shrink-0">{c.code}</span>
-                  </div>
-                  <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
-                    <Phone size={11} />{c.phone}
-                  </div>
-                </div>
-              </button>
-            </li>
-          ))}
-          {list.length === 0 && (
-            <li className="p-6 text-center text-slate-400 text-sm">Không tìm thấy khách hàng.</li>
-          )}
-        </ul>
+    <div className="space-y-5 animate-fade">
+      {/* Top Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard icon={FileText}      label="Tổng Hồ Sơ Khách Hàng" value={stats.total} grad="from-violet-500 to-purple-600" />
+        <StatCard icon={CalendarCheck} label="Checked-In Thực Tế"   value={stats.checkedIn} sub={`${stats.apptTotal} tổng lượt hẹn`} grad="from-sky-500 to-blue-600" />
+        <StatCard icon={Receipt}       label="Tổng Doanh Số Phát Sinh" value={tr(stats.billed)} sub={`${invoices.length} hoá đơn xuất`} grad="from-emerald-500 to-teal-600" />
+        <StatCard icon={Wallet}        label="Doanh Thu Đã Thu Thực Tế" value={tr(stats.collected)} sub="Tiền mặt & chuyển khoản" grad="from-amber-500 to-orange-600" />
       </div>
 
-      {/* Hồ sơ */}
-      <div className="flex-1">
-        {!selCust ? (
-          <div className="card h-full min-h-[40vh] flex items-center justify-center text-center text-slate-400 text-sm p-8">
-            Chọn một khách hàng để xem hồ sơ và lịch sử.
+      <div className="flex flex-col lg:flex-row gap-5 items-start">
+        <div className="flex-1 min-w-0 w-full space-y-4">
+
+          {/* Card Lọc & Tìm kiếm */}
+          <div className="card p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="font-bold text-slate-900 text-base font-heading">Danh Sách Hồ Sơ Khách Hàng</h2>
+                <p className="text-xs text-slate-500">Tra cứu nhanh theo họ tên, số điện thoại, mã hồ sơ hoặc nguồn kênh</p>
+              </div>
+              <button onClick={() => openAdd("customer")} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 transition">
+                <UserPlus size={15} /> Thêm Khách Hàng
+              </button>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+              <div className="flex gap-1.5 overflow-x-auto scroll-soft py-0.5">
+                {TABS.map((t) => (
+                  <button key={t.key} onClick={() => setTab(t.key)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                      tab === t.key ? "bg-emerald-600 text-white shadow-xs" : "bg-slate-100 text-slate-600 hover:bg-slate-200/80"
+                    }`}>
+                    <t.icon size={14} /> {t.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-56">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nhập tên, SĐT, mã KH..." className={inputCls + " pl-8 text-xs py-2"} />
+                </div>
+                <select value={source} onChange={(e) => setSource(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none">
+                  <option value="all">Tất cả nguồn</option>
+                  {sources.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="card p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <Avatar src={selCust.avatar} name={selCust.name} size={64} rounded="2xl" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-900">{selCust.name}</h3>
-                    <p className="text-sm text-slate-500">{selCust.gender} · {ageFrom(selCust.dob)} · {selCust.group}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-emerald-600">{selCust.code}</span>
-                  <button onClick={() => onEdit?.(selCust)} title="Sửa hồ sơ"
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition">
-                    <Pencil size={15} />
-                  </button>
-                  <button onClick={() => removeCustomer(selCust)} title="Xoá khách hàng"
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition">
-                    <Trash2 size={15} />
-                  </button>
-                </div>
+
+          {/* Table list */}
+          <div className="table-container">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200/80 bg-slate-50/50 text-xs font-semibold text-slate-500">
+              <span>Hiển thị {shown.length} / {list.length} kết quả</span>
+              <div className="flex items-center gap-2">
+                <span>Trang:</span>
+                <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="rounded-lg border border-slate-200 px-2 py-1 bg-white focus:outline-none">
+                  <option value={20}>20 khách/trang</option>
+                  <option value={50}>50 khách/trang</option>
+                  <option value={0}>Tất cả</option>
+                </select>
               </div>
-              <div className="mt-4 grid sm:grid-cols-2 gap-y-2 text-sm">
-                <div className="flex items-center gap-2 text-slate-600"><Phone size={14} className="text-slate-400" />{selCust.phone}</div>
-                <div className="flex items-center gap-2 text-slate-600"><MapPin size={14} className="text-slate-400" />{selCust.address || "—"}</div>
-                <div className="flex items-center gap-2 text-slate-600"><Cake size={14} className="text-slate-400" />{fmtDate(selCust.dob)}</div>
-              </div>
-              {selCust.note && (
-                <p className="mt-3 text-sm bg-amber-50 text-amber-800 rounded-lg px-3 py-2">Ghi chú: {selCust.note}</p>
-              )}
             </div>
 
-            {(selCust.allergy || selCust.medicalHistory || selCust.guardianName || selCust.emergency) && (
-              <div className="card p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <HeartPulse size={15} className="text-rose-500" />
-                  <span className="font-medium text-slate-700 text-sm">Thông tin y tế</span>
-                </div>
-                {selCust.allergy && (
-                  <div className="mb-2 text-sm bg-rose-50 text-rose-700 rounded-lg px-3 py-2">
-                    <b>⚠ Dị ứng:</b> {selCust.allergy}
-                  </div>
-                )}
-                <div className="grid sm:grid-cols-2 gap-y-1 gap-x-4 text-sm text-slate-600">
-                  {selCust.medicalHistory && <div><span className="text-slate-400">Tiền sử:</span> {selCust.medicalHistory}</div>}
-                  {selCust.guardianName && <div><span className="text-slate-400">Người giám hộ:</span> {selCust.guardianName} {selCust.guardianPhone && `· ${selCust.guardianPhone}`}</div>}
-                  {selCust.emergency && <div><span className="text-slate-400">Liên hệ khẩn:</span> {selCust.emergency}</div>}
-                </div>
-              </div>
-            )}
-
-            {selCust.files?.length > 0 && (
-              <div className="card p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <ImageIcon size={15} className="text-sky-500" />
-                  <span className="font-medium text-slate-700 text-sm">Ảnh X-quang / Tài liệu ({selCust.files.length})</span>
-                </div>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                  {selCust.files.map((doc, i) => (
-                    <a key={i} href={doc.url} target="_blank" rel="noreferrer" title={doc.name}>
-                      <img src={doc.url} alt={doc.name} className="w-full h-20 object-cover rounded-lg border border-slate-200 hover:ring-2 hover:ring-emerald-400 transition" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="card p-5">
-              <div className="font-medium text-slate-700 text-sm mb-3">Sơ đồ răng</div>
-              <Odontogram value={selCust.teeth} onChange={updateTeeth} />
-            </div>
-
-            <div className="card">
-              <div className="px-5 py-3 border-b border-slate-100 font-medium text-slate-700 text-sm">Lịch sử lịch hẹn</div>
-              {histAppts.length === 0 ? (
-                <div className="p-5 text-sm text-slate-400">Chưa có lịch hẹn.</div>
-              ) : (
-                <ul className="divide-y divide-slate-50">
-                  {histAppts.map((a) => (
-                    <li key={a.id} className="px-5 py-3 flex items-center justify-between">
-                      <div>
-                        <div className="text-sm text-slate-800">{svc(a.serviceId)?.name}</div>
-                        <div className="text-xs text-slate-500">{fmtDate(a.date)} · {a.time} · {a.doctor}</div>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50/90 border-b border-slate-200/80 text-slate-600 font-semibold uppercase tracking-wider">
+                  <th className="p-3 w-12 text-center">STT</th>
+                  <th className="p-3">Khách Hàng</th>
+                  <th className="p-3">Số Điện Thoại</th>
+                  <th className="p-3">Địa Chỉ / Nguồn</th>
+                  <th className="p-3 text-center w-20">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {shown.length === 0 ? (
+                  <tr><td colSpan={5} className="p-8 text-center text-slate-400">Không tìm thấy khách hàng phù hợp.</td></tr>
+                ) : shown.map((c, idx) => (
+                  <tr key={c.id} onClick={() => setSel(c.id)}
+                    className={`table-row cursor-pointer ${sel === c.id ? "bg-emerald-50/70 font-medium" : ""}`}>
+                    <td className="p-3 text-center text-slate-400 font-semibold">{idx + 1}</td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar src={c.avatar} name={c.name} size={34} />
+                        <div>
+                          <button onClick={(e) => { e.stopPropagation(); onOpenCustomer?.(c.id); }} className="font-bold text-emerald-700 hover:underline block text-left">
+                            {c.name}
+                          </button>
+                          <span className="text-[10px] text-slate-400 font-mono">{c.code} · {c.gender || "Khách"}</span>
+                        </div>
                       </div>
-                      <Badge status={a.status} />
-                    </li>
-                  ))}
-                </ul>
-              )}
+                    </td>
+                    <td className="p-3 font-semibold text-slate-700">{c.phone}</td>
+                    <td className="p-3 text-slate-500">{c.address || "Chưa cập nhật"} {c.source && <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-600 ml-1">{c.source}</span>}</td>
+                    <td className="p-3">
+                      <div className="flex items-center justify-center gap-1">
+                        <button onClick={(e) => { e.stopPropagation(); onEdit?.(c); }} title="Sửa"
+                          className="w-7 h-7 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition grid place-items-center">
+                          <Pencil size={14} />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); removeCustomer(c); }} title="Xoá"
+                          className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Panel Chi Tiết Bên Phải */}
+        {selCust && (
+          <aside className="w-full lg:w-80 shrink-0 card p-5 space-y-4 lg:sticky lg:top-20 max-h-[calc(100vh-6rem)] overflow-y-auto scroll-soft animate-fade text-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <button onClick={() => setSel(null)} className="flex items-center gap-1 font-bold text-slate-500 hover:text-slate-800">
+                <ChevronLeft size={16} /> Đóng
+              </button>
+              <div className="flex items-center gap-1">
+                <button onClick={() => onEdit?.(selCust)} title="Chỉnh sửa hồ sơ" className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50">
+                  <Pencil size={15} />
+                </button>
+                <button onClick={() => removeCustomer(selCust)} title="Xóa" className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50">
+                  <Trash2 size={15} />
+                </button>
+              </div>
             </div>
 
-            <div className="card">
-              <div className="px-5 py-3 border-b border-slate-100 font-medium text-slate-700 text-sm">Ghi chú chăm sóc</div>
-              {histCare.length === 0 ? (
-                <div className="p-5 text-sm text-slate-400">Chưa có.</div>
-              ) : (
-                <ul className="divide-y divide-slate-50">
-                  {histCare.map((c) => (
-                    <li key={c.id} className="px-5 py-3">
-                      <div className="text-sm text-slate-800">{c.type} — {c.content}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{c.status} · gọi lại {fmtDate(c.callback)}</div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+            {/* Main Info */}
+            <div className="flex flex-col items-center text-center">
+              <Avatar src={selCust.avatar} name={selCust.name} size={72} className="ring-4 ring-emerald-500/20 mb-2" />
+              <h3 className="font-bold text-slate-900 text-base font-heading">{selCust.name}</h3>
+              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full mt-1 border border-emerald-200/60">
+                {selCust.code}
+              </span>
             </div>
-          </div>
+
+            <div className="space-y-2 pt-2 border-t border-slate-100 text-slate-600">
+              <div className="flex justify-between"><span className="text-slate-400">Điện thoại:</span> <span className="font-semibold text-slate-800">{selCust.phone}</span></div>
+              <div className="flex justify-between"><span className="text-slate-400">Giới tính / Tuổi:</span> <span className="font-semibold text-slate-800">{selCust.gender} · {ageFrom(selCust.dob)} tuổi</span></div>
+              <div className="flex justify-between"><span className="text-slate-400">Doanh số:</span> <span className="font-extrabold text-emerald-700">{fmtVND(selBilled)}</span></div>
+              <div className="flex justify-between"><span className="text-slate-400">Đã thu:</span> <span className="font-extrabold text-sky-700">{fmtVND(selPaid)}</span></div>
+            </div>
+
+            <button onClick={() => onOpenCustomer?.(selCust.id)}
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 transition">
+              Xem Hồ Sơ Chi Tiết & Răng →
+            </button>
+          </aside>
         )}
       </div>
+
     </div>
   );
 }

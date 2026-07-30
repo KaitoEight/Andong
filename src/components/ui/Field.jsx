@@ -3,9 +3,8 @@ export const inputCls =
   "shadow-sm shadow-slate-100 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500";
 
 export const btnPrimary =
-  "inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white " +
-  "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25 " +
-  "hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200";
+  "inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white " +
+  "bg-emerald-600 shadow-sm shadow-emerald-600/20 hover:bg-emerald-700 active:scale-[.98] transition-all duration-150";
 
 export const btnGhost =
   "inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-slate-600 text-sm font-medium " +

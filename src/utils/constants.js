@@ -125,3 +125,61 @@ export function findNavChild(viewKey) {
 }
 
 export const STORAGE_KEY = "denta:data:v1";
+
+// Đường dẫn URL thật cho từng trang (kiểu VTTECH)
+export const VIEW_PATHS = {
+  dashboard:        "/dashboard/",
+  "appt-today":     "/appointment/inday/",
+  "appt-calendar":  "/appointment/calendar/",
+  "appt-doctor":    "/appointment/doctor/",
+  "care-remind":    "/care/remind/",
+  "care-noservice": "/care/noservice/",
+  "care-birthday":  "/care/birthday/",
+  "care-noshow":    "/care/noshow/",
+  "care-after":     "/care/aftertreatment/",
+  "care-complaint": "/care/complaint/",
+  "care-cancel":    "/care/cancel/",
+  "acc-invoice":    "/accounting/invoice/",
+  "acc-history":    "/accounting/history/",
+  "acc-fund":       "/accounting/fund/",
+  "acc-shift":      "/accounting/shift/",
+  "customer-new":   "/customer/create/",
+  customers:        "/customer/listcustomer/",
+  services:         "/service/servicelist/",
+  prescription:     "/service/prescriptionmedicine/prescriptionmedicine/",
+  "wh-manage":      "/warehouse/managewarehouse/",
+  "wh-material":    "/warehouse/material/",
+  "wh-lookup":      "/warehouse/lookup/",
+  "wh-lock":        "/warehouse/lockwarehouse/",
+  "wh-raw":         "/warehouse/rawmaterial/",
+  "wh-setting":     "/warehouse/setting/",
+  "mk-discount":    "/marketing/discount/",
+  "mk-filter":      "/marketing/filtercustomer/",
+  "int-sms":        "/integration/smszns/",
+  "int-call":       "/integration/callhistory/",
+  "int-voip":       "/integration/voip/",
+  "staff-list":     "/employee/listemployee/",
+  "staff-users":    "/employee/listuser/",
+  "staff-schedule": "/employee/schedule/",
+  "staff-perm":     "/employee/permission/",
+  "cfg-category":   "/config/category/",
+  "cfg-print":      "/config/printtemplate/",
+  "cfg-log":        "/config/log/",
+  reports:          "/report/listreport/",
+};
+
+const PATH_TO_VIEW = Object.fromEntries(
+  Object.entries(VIEW_PATHS).map(([v, p]) => [p.toLowerCase().replace(/\/+$/, ""), v])
+);
+
+export function pathForView(view) {
+  return VIEW_PATHS[view] || "/" + view;
+}
+
+// Nhận cả path mới (/service/servicelist/) lẫn view-key cũ (services)
+export function viewForPath(raw) {
+  const norm = (raw || "").toLowerCase().replace(/\/+$/, "");
+  if (PATH_TO_VIEW[norm]) return PATH_TO_VIEW[norm];
+  const key = decodeURIComponent((raw || "").replace(/^\/+/, "").trim());
+  return findNavChild(key) ? key : "";
+}

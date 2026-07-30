@@ -11,6 +11,7 @@ import Reports        from "./src/components/Reports";
 import AddForm        from "./src/components/AddForm";
 import AppointmentForm from "./src/components/AppointmentForm";
 import CustomerForm    from "./src/components/CustomerForm";
+import CustomerDetail  from "./src/components/CustomerDetail";
 import ComingSoon     from "./src/components/ComingSoon";
 import LoginPage      from "./src/components/auth/LoginPage";
 import RegisterPage   from "./src/components/auth/RegisterPage";
@@ -26,23 +27,34 @@ import Integration    from "./src/components/Integration";
 import Configuration  from "./src/components/Configuration";
 import { loadData, saveData } from "./src/utils/storage";
 import { getSession, clearSession } from "./src/utils/auth";
-import { findNavChild } from "./src/utils/constants";
+import { findNavChild, pathForView, viewForPath } from "./src/utils/constants";
 import { loadPerms, savePerms, canAccess, ROLES, ADMIN_ROLE } from "./src/utils/perms";
 import { Lock } from "lucide-react";
 
 const DEFAULT_VIEW = "dashboard";
 
-// Lấy view từ hash URL (vd #appt-today) — chỉ nhận nếu là view hợp lệ
-function viewFromHash() {
-  const h = decodeURIComponent((window.location.hash || "").replace(/^#\/?/, "").trim());
-  return h && findNavChild(h) ? h : "";
+// Phân tích hash URL: trang chi tiết khách hàng hoặc view thường
+function parseHash() {
+  const raw = (window.location.hash || "").replace(/^#/, ""); // giữ dấu "/" đầu
+  if (raw.toLowerCase().startsWith("/customer/maincustomer")) {
+    const qs = new URLSearchParams(raw.slice(raw.indexOf("?") + 1));
+    let id = qs.get("CustomerID") || "";
+    try { id = atob(decodeURIComponent(id)); } catch { /* dùng nguyên */ }
+    return { type: "detail", id, tab: qs.get("tab") || "thong-tin" };
+  }
+  return { type: "view", view: viewForPath(raw) };
+}
+function detailHash(id, tab) {
+  return "/Customer/MainCustomer?CustomerID=" + encodeURIComponent(btoa(id)) + "&ver=3.0.0.0&tab=" + tab;
 }
 
 export default function App() {
+  const initHash = parseHash();
   const [user, setUser]     = useState(() => getSession());
   const [authPage, setAuthPage] = useState("login");
   const [data, setData]     = useState(null);
-  const [view, setView]     = useState(() => viewFromHash() || DEFAULT_VIEW);
+  const [view, setView]     = useState(() => initHash.type === "detail" ? "customers" : (initHash.view || DEFAULT_VIEW));
+  const [detail, setDetail] = useState(() => initHash.type === "detail" ? { id: initHash.id, tab: initHash.tab } : null);
   const [adding, setAdding] = useState(null);
   const [editAppt, setEditAppt] = useState(null);
   const [editCust, setEditCust] = useState(null);
@@ -52,18 +64,31 @@ export default function App() {
   const addRef = useRef(() => {});
 
   const updatePerms = (p) => { setPermsState(p); savePerms(p); };
+  const openCustomer = (id, tab = "thong-tin") => { setView("customers"); setDetail({ id, tab }); };
+  // Điều hướng menu: luôn thoát trang chi tiết khách
+  const navigate = (v) => { setDetail(null); setView(v); };
 
   useEffect(() => { if (user) loadData().then(setData); }, [user]);
   useEffect(() => { if (data) saveData(data); }, [data]);
 
-  // Đồng bộ địa chỉ URL theo view hiện tại
+  // Đồng bộ địa chỉ URL theo trạng thái hiện tại
   useEffect(() => {
-    if (viewFromHash() !== view) window.location.hash = view;
-  }, [view]);
+    const cur = (window.location.hash || "").replace(/^#/, "");
+    const want = detail ? detailHash(detail.id, detail.tab) : pathForView(view);
+    if (cur !== want) window.location.hash = want;
+  }, [view, detail]);
 
   // Bắt nút Back/Forward của trình duyệt
   useEffect(() => {
-    const onHash = () => { const v = viewFromHash(); if (v && v !== view) setView(v); };
+    const onHash = () => {
+      const p = parseHash();
+      if (p.type === "detail") {
+        setDetail((d) => (d && d.id === p.id && d.tab === p.tab) ? d : { id: p.id, tab: p.tab });
+      } else {
+        setDetail(null);
+        if (p.view && p.view !== view) setView(p.view);
+      }
+    };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, [view]);
@@ -79,8 +104,8 @@ export default function App() {
 
   const registerAdd = (fn) => { addRef.current = fn; };
 
-  const handleLogin = (loggedInUser) => { setUser(loggedInUser); setData(null); setView(DEFAULT_VIEW); setPreviewRole(null); };
-  const handleLogout = () => { clearSession(); setUser(null); setData(null); setAdding(null); setView(DEFAULT_VIEW); setPreviewRole(null); };
+  const handleLogin = (loggedInUser) => { setUser(loggedInUser); setData(null); setView(DEFAULT_VIEW); setPreviewRole(null); setDetail(null); };
+  const handleLogout = () => { clearSession(); setUser(null); setData(null); setAdding(null); setView(DEFAULT_VIEW); setPreviewRole(null); setDetail(null); };
 
   if (!user) {
     return authPage === "login"
@@ -118,6 +143,32 @@ export default function App() {
   };
 
   const renderView = () => {
+    // Trang chi tiết khách hàng (điều hướng /Customer/MainCustomer)
+    if (detail) {
+      if (!canAccess(effectiveRole, "khach-hang", perms)) {
+        return (
+          <div className="card p-12 flex flex-col items-center justify-center text-center min-h-[40vh]">
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 grid place-items-center mb-4"><Lock size={26} /></div>
+            <h2 className="text-lg font-semibold text-slate-800">Không có quyền truy cập</h2>
+          </div>
+        );
+      }
+      const cust = safeData.customers.find((c) => c.id === detail.id);
+      if (!cust) {
+        return (
+          <div className="card p-12 text-center text-slate-400">
+            Không tìm thấy khách hàng.
+            <div><button onClick={() => setDetail(null)} className="mt-3 text-emerald-600 font-medium">← Về danh sách</button></div>
+          </div>
+        );
+      }
+      return (
+        <CustomerDetail data={safeData} setData={setData} customer={cust} tab={detail.tab}
+          onTab={(t) => setDetail((d) => ({ ...d, tab: t }))}
+          onBack={() => setDetail(null)} onEdit={setEditCust} />
+      );
+    }
+
     // Chặn truy cập theo phân quyền
     const found = findNavChild(view);
     if (found && !canAccess(effectiveRole, found.group.key, perms)) {
@@ -135,7 +186,7 @@ export default function App() {
     switch (view) {
       // ── Tổng Quan ─────────────────────────────────────────────────────────
       case "dashboard":
-        return <Dashboard data={safeData} go={setView} />;
+        return <Dashboard data={safeData} go={navigate} />;
 
       // ── Lịch Hẹn ──────────────────────────────────────────────────────────
       case "appt-today":
@@ -166,7 +217,7 @@ export default function App() {
       // ── Khách Hàng ────────────────────────────────────────────────────────
       case "customers":
       case "customer-new":
-        return <Customers data={safeData} setData={setData} openAdd={setAdding} registerAdd={registerAdd} onEdit={setEditCust} />;
+        return <Customers data={safeData} setData={setData} openAdd={setAdding} registerAdd={registerAdd} onEdit={setEditCust} onOpenCustomer={openCustomer} />;
 
       // ── Dịch Vụ ───────────────────────────────────────────────────────────
       case "services":
@@ -219,19 +270,14 @@ export default function App() {
   };
 
   return (
-    <div
-      className="min-h-screen app-bg text-slate-800 flex"
-      style={{ fontFamily: "'Be Vietnam Pro', system-ui, sans-serif" }}
-    >
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');`}</style>
-
-      <Sidebar view={view} setView={setView} user={viewUser} onLogout={handleLogout} perms={perms}
+    <div className="h-screen overflow-hidden app-bg text-slate-700 text-sm flex">
+      <Sidebar view={view} setView={navigate} user={viewUser} onLogout={handleLogout} perms={perms}
         realRole={realRole} previewRole={previewRole} onPreviewRole={changePreview} />
 
       <div className="flex-1 min-w-0 flex flex-col">
-        <Header view={view} setView={setView} onAdd={() => addRef.current()} user={viewUser} perms={perms}
-          previewRole={previewRole} onExitPreview={() => changePreview(null)} />
-        <main className="p-4 sm:p-6 flex-1 overflow-y-auto scroll-soft animate-fade" key={view}>{renderView()}</main>
+        <Header view={view} setView={navigate} onAdd={() => addRef.current()} user={viewUser} perms={perms}
+          previewRole={previewRole} onExitPreview={() => changePreview(null)} onLogout={handleLogout} />
+        <main className="p-4 flex-1 overflow-y-auto scroll-soft" key={view}>{renderView()}</main>
       </div>
 
       {(adding === "appt" || editAppt || apptCustId) && (
