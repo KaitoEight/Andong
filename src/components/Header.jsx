@@ -11,7 +11,7 @@ export default function Header({ view, setView, onAdd, user, perms, previewRole,
   const group   = found?.group;
   const child   = found?.child;
   const addable = child?.addable ?? false;
-  const groups  = NAV.filter((g) => canAccess(user?.role, g.key, perms));
+  const groups  = NAV.filter((g) => canAccess(user, g.key, perms));
 
   return (
     <>

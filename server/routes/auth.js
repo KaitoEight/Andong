@@ -29,8 +29,21 @@ async function ensureDefaultAdmin() {
         role: "Quản lý",
       });
     }
+
+    // Seed sẵn các tài khoản mẫu
+    const defaultAccounts = [
+      { username: "bacsi", fullName: "Bác sĩ Nguyễn Văn Nam", role: "Bác sĩ", pass: "123456" },
+      { username: "letan", fullName: "Lễ tân Lê Thị Hoa", role: "Lễ tân", pass: "123456" },
+    ];
+    for (const acc of defaultAccounts) {
+      const exists = await User.findOne({ username: acc.username });
+      if (!exists) {
+        const hash = await bcrypt.hash(acc.pass, 10);
+        await User.create({ fullName: acc.fullName, username: acc.username, passwordHash: hash, role: acc.role });
+      }
+    }
   } catch (err) {
-    console.error("Error seeding default admin:", err.message);
+    console.error("Error seeding default accounts:", err.message);
   }
 }
 
@@ -72,28 +85,40 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// Cập nhật thông tin & vai trò của user
+// Cập nhật thông tin & vai trò của user (Upsert nếu chưa có)
 router.post("/update-user", async (req, res) => {
   try {
     const { username, fullName, role, password } = req.body;
     if (!username?.trim()) return res.json({ ok: false, error: "Thiếu tên đăng nhập." });
 
-    const user = await User.findOne({ username: username.toLowerCase() });
-    if (!user) return res.json({ ok: false, error: "Không tìm thấy người dùng." });
+    const normUser = username.trim().toLowerCase();
+    let user = await User.findOne({ username: normUser });
 
-    if (fullName?.trim()) user.fullName = fullName.trim();
-    if (role) {
-      const ROLES = ["Quản lý", "Bác sĩ", "Lễ tân", "Kế toán"];
-      if (ROLES.includes(role)) user.role = role;
-    }
-    if (password && password.length >= 6) {
-      user.passwordHash = await bcrypt.hash(password, 10);
+    if (!user) {
+      const defaultHash = password && password.length >= 6
+        ? await bcrypt.hash(password, 10)
+        : await bcrypt.hash("123456", 10);
+      user = new User({
+        fullName: fullName?.trim() || normUser,
+        username: normUser,
+        passwordHash: defaultHash,
+        role: role || "Bác sĩ",
+      });
+    } else {
+      if (fullName?.trim()) user.fullName = fullName.trim();
+      if (role) {
+        const ROLES = ["Quản lý", "Bác sĩ", "Lễ tân", "Kế toán"];
+        if (ROLES.includes(role)) user.role = role;
+      }
+      if (password && password.length >= 6) {
+        user.passwordHash = await bcrypt.hash(password, 10);
+      }
     }
 
     await user.save();
     res.json({ ok: true, user: { id: user._id, fullName: user.fullName, username: user.username, role: user.role } });
   } catch (err) {
-    console.error(err);
+    console.error("Error updating user:", err);
     res.json({ ok: false, error: "Lỗi cập nhật user." });
   }
 });

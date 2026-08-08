@@ -10,7 +10,7 @@ function getInitialGroup(viewKey) {
 
 export default function Sidebar({ view, setView, user, onLogout, perms, realRole, previewRole, onPreviewRole }) {
   const [openGroup, setOpenGroup] = useState(() => getInitialGroup(view));
-  const groups = NAV.filter((g) => canAccess(user?.role, g.key, perms));
+  const groups = NAV.filter((g) => canAccess(user, g.key, perms));
 
   // Mở đúng nhóm chứa view hiện tại khi đổi trang qua URL/Back/F5
   useEffect(() => { setOpenGroup(getInitialGroup(view)); }, [view]);

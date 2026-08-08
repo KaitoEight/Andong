@@ -139,13 +139,13 @@ export default function App() {
     setPreviewRole(r);
     const eff = r || realRole;
     const f = findNavChild(view);
-    if (f && !canAccess(eff, f.group.key, perms)) setView(DEFAULT_VIEW);
+    if (f && !canAccess({ ...user, role: eff }, f.group.key, perms)) setView(DEFAULT_VIEW);
   };
 
   const renderView = () => {
     // Trang chi tiết khách hàng (điều hướng /Customer/MainCustomer)
     if (detail) {
-      if (!canAccess(effectiveRole, "khach-hang", perms)) {
+      if (!canAccess(viewUser, "khach-hang", perms)) {
         return (
           <div className="card p-12 flex flex-col items-center justify-center text-center min-h-[40vh]">
             <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 grid place-items-center mb-4"><Lock size={26} /></div>
@@ -171,7 +171,7 @@ export default function App() {
 
     // Chặn truy cập theo phân quyền
     const found = findNavChild(view);
-    if (found && !canAccess(effectiveRole, found.group.key, perms)) {
+    if (found && !canAccess(viewUser, found.group.key, perms)) {
       return (
         <div className="card p-12 flex flex-col items-center justify-center text-center min-h-[40vh]">
           <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 grid place-items-center mb-4"><Lock size={26} /></div>

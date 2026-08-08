@@ -27,36 +27,40 @@ export function saveLocalUsers(users) {
 
 export async function login(username, password) {
   const normUser = (username || "").trim().toLowerCase();
+  const localUsers = loadLocalUsers();
+  const localUser = localUsers.find((u) => u.username.toLowerCase() === normUser);
 
   // Gọi server API trước
   const result = await apiFetch("/auth/login", { method: "POST", body: { username: normUser, password } });
   if (result.ok) {
+    // Nếu localUser đã được Admin cập nhật role mới hơn, luôn áp dụng role mới nhất
+    if (localUser && localUser.role && localUser.role !== result.user.role) {
+      result.user.role = localUser.role;
+      // Đồng bộ role mới lên server
+      apiFetch("/auth/update-user", { method: "POST", body: { username: normUser, role: localUser.role } }).catch(() => {});
+    }
     setToken(result.token);
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(result.user));
     return result;
   }
 
   // Fallback Local Auth cho môi trường Offline / Client Standalone
-  const users = loadLocalUsers();
-
-  // Xử lý tài khoản Admin mặc định admin@gmail.com / admin123 hoặc admin / admin123 / 123456
   if ((normUser === "admin@gmail.com" || normUser === "admin") && (password === "admin123" || password === "123456")) {
-    const adminUser = { id: "u_admin", fullName: "Quản trị viên", username: normUser, role: "Quản lý" };
+    const role = localUser?.role || "Quản lý";
+    const adminUser = { id: "u_admin", fullName: localUser?.fullName || "Quản trị viên", username: normUser, role };
     setToken("mock_admin_token");
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(adminUser));
     return { ok: true, token: "mock_admin_token", user: adminUser };
   }
 
-  // Tìm trong danh sách local users
-  const found = users.find((u) => u.username.toLowerCase() === normUser);
-  if (found && (password === "123456" || password === "admin123" || found.password === password)) {
-    if (found.active === false) {
+  if (localUser && (password === "123456" || password === "admin123" || localUser.password === password)) {
+    if (localUser.active === false) {
       return { ok: false, error: "Tài khoản này đã bị khóa." };
     }
-    const sessUser = { id: found.id, fullName: found.fullName, username: found.username, role: found.role };
-    setToken("mock_token_" + found.id);
+    const sessUser = { id: localUser.id, fullName: localUser.fullName, username: localUser.username, role: localUser.role };
+    setToken("mock_token_" + localUser.id);
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessUser));
-    return { ok: true, token: "mock_token_" + found.id, user: sessUser };
+    return { ok: true, token: "mock_token_" + localUser.id, user: sessUser };
   }
 
   return { ok: false, error: "Tên đăng nhập hoặc mật khẩu không đúng." };
@@ -87,7 +91,7 @@ export async function updateUser({ id, username, fullName, role, password, activ
     if ((id && u.id === id) || u.username.toLowerCase() === normUser) {
       return {
         ...u,
-        fullName: fullName !== undefined ? fullName.trim() : u.fullName,
+        fullName: fullName !== undefined && fullName.trim() ? fullName.trim() : u.fullName,
         role: role !== undefined ? role : u.role,
         active: active !== undefined ? active : u.active,
         ...(password ? { password } : {}),
