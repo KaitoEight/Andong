@@ -12,7 +12,7 @@ const BASE = {
 };
 
 export function defaultPerms() {
-  const out = { users: {} };
+  const out = {};
   for (const role of ROLES) {
     out[role] = {};
     for (const g of NAV) {
@@ -23,17 +23,19 @@ export function defaultPerms() {
   return out;
 }
 
-const KEY = "denta:perms:v2";
+const KEY = "denta:perms:v3";
 
 export function loadPerms() {
   try {
     const def = defaultPerms();
     const saved = JSON.parse(localStorage.getItem(KEY) || "null");
     if (!saved) return def;
-    const result = { ...def, ...saved, users: saved.users || {} };
+    const result = { ...def, ...saved };
     for (const role of ROLES) {
       result[role] = { ...def[role], ...(saved[role] || {}) };
-      if (role === ADMIN_ROLE) for (const g of NAV) result[role][g.key] = true;
+      if (role === ADMIN_ROLE) {
+        for (const g of NAV) result[role][g.key] = true;
+      }
     }
     return result;
   } catch {
@@ -47,23 +49,10 @@ export function savePerms(perms) {
 
 export function canAccess(roleOrUser, groupKey, perms) {
   if (!roleOrUser) return true;
-  
-  let role = roleOrUser;
-  let username = "";
-  
-  if (typeof roleOrUser === "object") {
-    role = roleOrUser.role || ADMIN_ROLE;
-    username = (roleOrUser.username || "").toLowerCase();
-  }
+  const role = typeof roleOrUser === "object" ? (roleOrUser.role || ADMIN_ROLE) : roleOrUser;
   
   if (role === ADMIN_ROLE) return true;
   if (ALWAYS.includes(groupKey)) return true;
 
-  // Kiểm tra quyền riêng của User (nếu có)
-  if (username && perms?.users?.[username] && perms.users[username][groupKey] !== undefined) {
-    return !!perms.users[username][groupKey];
-  }
-
-  // Nếu không có quyền riêng, áp dụng theo vai trò
   return !!perms?.[role]?.[groupKey];
 }

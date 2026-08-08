@@ -177,11 +177,11 @@ function StaffList({ data, setData, openAdd, registerAdd }) {
 }
 
 // ─── Danh Sách User & Phân Quyền Tài Khoản Đăng Nhập ──────────────────────────
-function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
-  const [users, setUsers]   = useState(loadLocalUsers);
-  const [q, setQ]           = useState("");
-  const [modal, setModal]   = useState(null); // { mode: 'create'|'edit', user: {...} }
-  const [error, setError]   = useState("");
+function StaffUsers({ openAdd, registerAdd }) {
+  const [users, setUsers] = useState(loadLocalUsers);
+  const [q, setQ]         = useState("");
+  const [modal, setModal] = useState(null); // { isEdit: boolean, user: {...} }
+  const [error, setError] = useState("");
 
   registerAdd?.(() => openUserModal(null));
 
@@ -194,19 +194,6 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
   const openUserModal = (userToEdit) => {
     setError("");
     const isEdit = !!userToEdit;
-    const username = (userToEdit?.username || "").toLowerCase();
-    
-    // Nạp quyền truy cập hiện tại của User (nếu có riêng trong perms.users)
-    const userPerms = perms?.users?.[username] || {};
-    
-    // Nếu chưa có quyền riêng, mặc định copy theo Vai trò
-    const initialPermMap = {};
-    for (const g of NAV) {
-      initialPermMap[g.key] = userPerms[g.key] !== undefined
-        ? userPerms[g.key]
-        : canAccess(userToEdit?.role || "Quản lý", g.key, perms);
-    }
-
     setModal({
       isEdit,
       user: {
@@ -217,13 +204,12 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
         role: userToEdit?.role || "Bác sĩ",
         active: userToEdit?.active !== false,
       },
-      permMap: initialPermMap,
     });
   };
 
   const handleSaveUser = () => {
     if (!modal) return;
-    const { isEdit, user, permMap } = modal;
+    const { isEdit, user } = modal;
     
     if (!user.fullName.trim()) { setError("Vui lòng nhập họ tên."); return; }
     if (!user.username.trim()) { setError("Vui lòng nhập tên đăng nhập / Email."); return; }
@@ -259,18 +245,6 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
 
     setUsers(updatedUsers);
     saveLocalUsers(updatedUsers);
-
-    if (onPerms && perms) {
-      const newPerms = {
-        ...perms,
-        users: {
-          ...(perms.users || {}),
-          [normUser]: permMap,
-        },
-      };
-      onPerms(newPerms);
-    }
-
     setModal(null);
   };
 
@@ -299,9 +273,9 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
       <div className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="font-bold text-slate-900 text-base font-heading flex items-center gap-2">
-            <Monitor className="text-emerald-600" size={18} /> Quản Lý Tài Khoản Đăng Nhập & Phân Quyền Riêng
+            <Monitor className="text-emerald-600" size={18} /> Quản Lý Tài Khoản Đăng Nhập
           </h2>
-          <p className="text-xs text-slate-500">Admin tạo tài khoản cho nhân viên và cấp quyền truy cập từng menu chức năng</p>
+          <p className="text-xs text-slate-500">Admin tạo tài khoản cho nhân viên và phân công Vai trò hệ thống</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -328,17 +302,15 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
               <th className="p-3">Tài Khoản / Email</th>
               <th className="p-3">Họ Và Tên</th>
               <th className="p-3">Vai Trò Hệ Thống</th>
-              <th className="p-3 text-center">Quyền Truy Cập</th>
               <th className="p-3 text-center">Trạng Thái</th>
               <th className="p-3 text-center w-24">Thao Tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredUsers.length === 0 ? (
-              <tr><td colSpan={7} className="p-12 text-center text-slate-400">Không có tài khoản người dùng nào.</td></tr>
+              <tr><td colSpan={6} className="p-12 text-center text-slate-400">Không có tài khoản người dùng nào.</td></tr>
             ) : filteredUsers.map((u, idx) => {
               const isAdmin = u.role === ADMIN_ROLE || u.username.toLowerCase().includes("admin");
-              const hasCustomPerms = !!perms?.users?.[u.username.toLowerCase()];
               return (
                 <tr key={u.id || idx} className="table-row">
                   <td className="p-3 text-center text-slate-400 font-bold">{idx + 1}</td>
@@ -357,15 +329,6 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
                     </span>
                   </td>
                   <td className="p-3 text-center">
-                    {isAdmin ? (
-                      <span className="text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">Full Quyền Admin</span>
-                    ) : hasCustomPerms ? (
-                      <span className="text-[10px] font-extrabold text-violet-700 bg-violet-50 px-2.5 py-0.5 rounded-full border border-violet-200">Đã Phân Quyền Riêng</span>
-                    ) : (
-                      <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">Theo Vai Trò ({u.role})</span>
-                    )}
-                  </td>
-                  <td className="p-3 text-center">
                     <button
                       onClick={() => toggleUserActive(u)}
                       disabled={isAdmin}
@@ -381,7 +344,7 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
                   </td>
                   <td className="p-3 text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => openUserModal(u)} title="Sửa thông tin & cấp quyền"
+                      <button onClick={() => openUserModal(u)} title="Sửa thông tin & vai trò"
                         className="w-7 h-7 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition grid place-items-center">
                         <Pencil size={14} />
                       </button>
@@ -400,7 +363,7 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
         </table>
       </div>
 
-      {/* Modal Tạo / Chỉnh Sửa Tài Khoản & Cấp Quyền */}
+      {/* Modal Tạo / Chỉnh Sửa Tài Khoản */}
       {modal && (
         <Modal
           title={modal.isEdit ? `Cấu Hình Tài Khoản: ${modal.user.username}` : "Tạo Tài Khoản Người Dùng Mới"}
@@ -447,62 +410,14 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
               <select
                 className={inputCls}
                 value={modal.user.role}
-                onChange={(e) => {
-                  const newRole = e.target.value;
-                  const newPermMap = {};
-                  for (const g of NAV) {
-                    newPermMap[g.key] = canAccess(newRole, g.key, perms);
-                  }
-                  setModal({
-                    ...modal,
-                    user: { ...modal.user, role: newRole },
-                    permMap: newPermMap,
-                  });
-                }}
+                onChange={(e) => setModal({ ...modal, user: { ...modal.user, role: e.target.value } })}
               >
                 {ACCOUNT_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
             </Field>
 
-            {/* Bảng phân quyền truy cập riêng từng Menu */}
-            {modal.user.role !== ADMIN_ROLE && (
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                  <span className="font-bold text-slate-800 text-xs font-heading flex items-center gap-1.5">
-                    <Shield className="text-emerald-600" size={15} /> Cấp Quyền Truy Cập Menu Riêng
-                  </span>
-                  <span className="text-[10px] text-slate-400">Tích chọn để bật/tắt quyền xem từng mục</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto scroll-soft p-1">
-                  {NAV.map((g) => {
-                    const isAlways = g.key === "tong-quan";
-                    const isChecked = isAlways || !!modal.permMap[g.key];
-                    return (
-                      <label key={g.key} className={`flex items-center justify-between p-2 rounded-xl border text-xs cursor-pointer transition ${isChecked ? "bg-emerald-50/80 border-emerald-300 text-emerald-900 font-bold" : "bg-white border-slate-200 text-slate-600"}`}>
-                        <span className="flex items-center gap-2">
-                          <g.icon size={15} className={isChecked ? "text-emerald-600" : "text-slate-400"} />
-                          {g.label}
-                        </span>
-                        <input
-                          type="checkbox"
-                          disabled={isAlways}
-                          checked={isChecked}
-                          onChange={(e) => setModal({
-                            ...modal,
-                            permMap: { ...modal.permMap, [g.key]: e.target.checked }
-                          })}
-                          className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
-                        />
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             <button onClick={handleSaveUser} className={btnPrimary + " w-full justify-center py-3 text-xs font-bold"}>
-              <Check size={16} /> {modal.isEdit ? "Cập Nhật Tài Khoản & Phân Quyền" : "Tạo Tài Khoản Ngay"}
+              <Check size={16} /> {modal.isEdit ? "Cập Nhật Tài Khoản" : "Tạo Tài Khoản Ngay"}
             </button>
           </div>
         </Modal>
