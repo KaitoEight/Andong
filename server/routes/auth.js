@@ -5,7 +5,6 @@ const User     = require("../models/User");
 
 const router = express.Router();
 
-// Tự động seed tài khoản admin mặc định admin@gmail.com / admin123
 async function ensureDefaultAdmin() {
   try {
     const adminExists = await User.findOne({ username: "admin@gmail.com" });
@@ -35,8 +34,18 @@ async function ensureDefaultAdmin() {
   }
 }
 
-// Chạy seed admin ngay khi module được load
 ensureDefaultAdmin();
+
+// Danh sách tất cả tài khoản
+router.get("/users", async (req, res) => {
+  try {
+    const users = await User.find({}, "fullName username role createdAt").sort({ createdAt: 1 });
+    res.json({ ok: true, users: users.map((u) => ({ id: u._id, fullName: u.fullName, username: u.username, role: u.role })) });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: false, error: "Lỗi lấy danh sách user." });
+  }
+});
 
 router.post("/register", async (req, res) => {
   try {
@@ -60,6 +69,47 @@ router.post("/register", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.json({ ok: false, error: "Lỗi server." });
+  }
+});
+
+// Cập nhật thông tin & vai trò của user
+router.post("/update-user", async (req, res) => {
+  try {
+    const { username, fullName, role, password } = req.body;
+    if (!username?.trim()) return res.json({ ok: false, error: "Thiếu tên đăng nhập." });
+
+    const user = await User.findOne({ username: username.toLowerCase() });
+    if (!user) return res.json({ ok: false, error: "Không tìm thấy người dùng." });
+
+    if (fullName?.trim()) user.fullName = fullName.trim();
+    if (role) {
+      const ROLES = ["Quản lý", "Bác sĩ", "Lễ tân", "Kế toán"];
+      if (ROLES.includes(role)) user.role = role;
+    }
+    if (password && password.length >= 6) {
+      user.passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    await user.save();
+    res.json({ ok: true, user: { id: user._id, fullName: user.fullName, username: user.username, role: user.role } });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: false, error: "Lỗi cập nhật user." });
+  }
+});
+
+// Xóa user
+router.post("/delete-user", async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (username?.toLowerCase().includes("admin")) {
+      return res.json({ ok: false, error: "Không thể xóa tài khoản Admin gốc." });
+    }
+    await User.deleteOne({ username: username?.toLowerCase() });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: false, error: "Lỗi xóa user." });
   }
 });
 

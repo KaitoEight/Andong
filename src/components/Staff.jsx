@@ -9,7 +9,7 @@ import Avatar from "./ui/Avatar";
 import { uid, todayStr, toLocalISODate } from "../utils/helpers";
 import { NAV } from "../utils/constants";
 import { ROLES as ACCOUNT_ROLES, ADMIN_ROLE, canAccess } from "../utils/perms";
-import { loadLocalUsers, saveLocalUsers, register } from "../utils/auth";
+import { loadLocalUsers, saveLocalUsers, register, updateUser, deleteUser } from "../utils/auth";
 
 const ROLES = ["Bác Sĩ", "Lễ Tân", "Kỹ Thuật Viên", "Y Tá"];
 
@@ -235,8 +235,11 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
     let updatedUsers = [...users];
     if (isEdit) {
       updatedUsers = updatedUsers.map((u) =>
-        u.id === user.id ? { ...u, fullName: user.fullName.trim(), username: normUser, role: user.role, active: user.active } : u
+        (u.id && u.id === user.id) || u.username.toLowerCase() === normUser
+          ? { ...u, fullName: user.fullName.trim(), username: normUser, role: user.role, active: user.active }
+          : u
       );
+      updateUser({ id: user.id, username: normUser, fullName: user.fullName.trim(), role: user.role, active: user.active, password: user.password });
     } else {
       if (users.some((u) => u.username.toLowerCase() === normUser)) {
         setError("Tên đăng nhập / Email này đã tồn tại.");
@@ -254,11 +257,9 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
       register({ fullName: user.fullName.trim(), username: normUser, password: user.password, role: user.role }).catch(() => {});
     }
 
-    // Cập nhật mảng Users vào storage
     setUsers(updatedUsers);
     saveLocalUsers(updatedUsers);
 
-    // Cập nhật phân quyền riêng cho User này vào `perms.users[normUser]`
     if (onPerms && perms) {
       const newPerms = {
         ...perms,
@@ -274,9 +275,10 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
   };
 
   const toggleUserActive = (user) => {
-    const updated = users.map((u) => (u.id === user.id ? { ...u, active: !u.active } : u));
+    const updated = users.map((u) => (u.id === user.id || u.username === user.username ? { ...u, active: !u.active } : u));
     setUsers(updated);
     saveLocalUsers(updated);
+    updateUser({ username: user.username, active: !user.active });
   };
 
   const handleDeleteUser = (user) => {
@@ -285,9 +287,10 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
       return;
     }
     if (!window.confirm(`Xoá tài khoản đăng nhập "${user.username}"?`)) return;
-    const updated = users.filter((u) => u.id !== user.id);
+    const updated = users.filter((u) => u.id !== user.id && u.username !== user.username);
     setUsers(updated);
     saveLocalUsers(updated);
+    deleteUser(user.username);
   };
 
   return (
@@ -444,7 +447,18 @@ function StaffUsers({ perms, onPerms, openAdd, registerAdd }) {
               <select
                 className={inputCls}
                 value={modal.user.role}
-                onChange={(e) => setModal({ ...modal, user: { ...modal.user, role: e.target.value } })}
+                onChange={(e) => {
+                  const newRole = e.target.value;
+                  const newPermMap = {};
+                  for (const g of NAV) {
+                    newPermMap[g.key] = canAccess(newRole, g.key, perms);
+                  }
+                  setModal({
+                    ...modal,
+                    user: { ...modal.user, role: newRole },
+                    permMap: newPermMap,
+                  });
+                }}
               >
                 {ACCOUNT_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>

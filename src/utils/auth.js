@@ -3,7 +3,6 @@ import { apiFetch, setToken, removeToken } from "./api";
 const SESSION_KEY = "denta:session:v1";
 const USERS_KEY   = "denta:local_users:v1";
 
-// Đảm bảo luôn có tài khoản Admin mặc định admin@gmail.com / admin123
 export const DEFAULT_USERS = [
   { id: "u_admin", fullName: "Quản trị viên", username: "admin@gmail.com", role: "Quản lý", active: true },
   { id: "u_admin_alt", fullName: "Quản trị viên", username: "admin", role: "Quản lý", active: true },
@@ -66,7 +65,6 @@ export async function login(username, password) {
 export async function register({ fullName, username, password, role }) {
   const normUser = (username || "").trim().toLowerCase();
   
-  // Lưu local
   const users = loadLocalUsers();
   if (users.some((u) => u.username.toLowerCase() === normUser)) {
     return { ok: false, error: "Tên đăng nhập / Email này đã tồn tại." };
@@ -74,12 +72,57 @@ export async function register({ fullName, username, password, role }) {
   const newUser = { id: "u_" + Date.now(), fullName: fullName.trim(), username: normUser, role: role || "Quản lý", active: true, password };
   saveLocalUsers([...users, newUser]);
 
-  // Thử sync server (nếu backend đang chạy)
   try {
     await apiFetch("/auth/register", { method: "POST", body: { fullName, username: normUser, password, role } });
   } catch { /* ignore */ }
 
   return { ok: true, user: newUser };
+}
+
+export async function updateUser({ id, username, fullName, role, password, active }) {
+  const normUser = (username || "").trim().toLowerCase();
+  const users = loadLocalUsers();
+
+  const updatedUsers = users.map((u) => {
+    if ((id && u.id === id) || u.username.toLowerCase() === normUser) {
+      return {
+        ...u,
+        fullName: fullName !== undefined ? fullName.trim() : u.fullName,
+        role: role !== undefined ? role : u.role,
+        active: active !== undefined ? active : u.active,
+        ...(password ? { password } : {}),
+      };
+    }
+    return u;
+  });
+
+  saveLocalUsers(updatedUsers);
+
+  // Đồng bộ phiên làm việc của người dùng hiện tại nếu vừa cập nhật vai trò của họ
+  const curSess = getSession();
+  if (curSess && curSess.username.toLowerCase() === normUser) {
+    const newSess = { ...curSess, fullName: fullName || curSess.fullName, role: role || curSess.role };
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(newSess));
+  }
+
+  try {
+    await apiFetch("/auth/update-user", { method: "POST", body: { username: normUser, fullName, role, password } });
+  } catch { /* ignore */ }
+
+  return { ok: true };
+}
+
+export async function deleteUser(username) {
+  const normUser = (username || "").trim().toLowerCase();
+  const users = loadLocalUsers();
+  const updatedUsers = users.filter((u) => u.username.toLowerCase() !== normUser);
+  saveLocalUsers(updatedUsers);
+
+  try {
+    await apiFetch("/auth/delete-user", { method: "POST", body: { username: normUser } });
+  } catch { /* ignore */ }
+
+  return { ok: true };
 }
 
 export function getSession() {
