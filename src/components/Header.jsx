@@ -3,7 +3,7 @@ import { Plus, Search, MapPin, Bell, LogOut, ChevronDown, Eye, X, Menu, Clipboar
 import { NAV, findNavChild } from "../utils/constants";
 import { canAccess } from "../utils/perms";
 
-export default function Header({ view, setView, onAdd, user, perms, previewRole, onExitPreview, onLogout }) {
+export default function Header({ view, setView, onAdd, user, perms, previewRole, onExitPreview, onLogout, onToggleMobile }) {
   const [userOpen, setUserOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
 
@@ -28,7 +28,9 @@ export default function Header({ view, setView, onAdd, user, perms, previewRole,
       <header className="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-xs px-5 flex items-center justify-between gap-4 sticky top-0 z-30">
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-3 min-w-0">
-          <span className="text-slate-500 md:hidden p-1.5 rounded-lg hover:bg-slate-100"><Menu size={20} /></span>
+          <button onClick={onToggleMobile} className="text-slate-600 md:hidden p-1.5 rounded-xl hover:bg-slate-100 active:scale-95 transition" title="Mở menu">
+            <Menu size={22} />
+          </button>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-bold text-slate-900 text-base leading-tight truncate font-heading">{group?.label || "Tổng Quan"}</span>

@@ -61,12 +61,13 @@ export default function App() {
   const [apptCustId, setApptCustId] = useState(null);
   const [perms, setPermsState] = useState(() => loadPerms());
   const [previewRole, setPreviewRole] = useState(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const addRef = useRef(() => {});
 
   const updatePerms = (p) => { setPermsState(p); savePerms(p); };
-  const openCustomer = (id, tab = "thong-tin") => { setView("customers"); setDetail({ id, tab }); };
-  // Điều hướng menu: luôn thoát trang chi tiết khách
-  const navigate = (v) => { setDetail(null); setView(v); };
+  const openCustomer = (id, tab = "thong-tin") => { setMobileOpen(false); setView("customers"); setDetail({ id, tab }); };
+  // Điều hướng menu: luôn đóng menu mobile và thoát trang chi tiết khách
+  const navigate = (v) => { setMobileOpen(false); setDetail(null); setView(v); };
 
   useEffect(() => { if (user) loadData().then(setData); }, [user]);
   useEffect(() => { if (data) saveData(data); }, [data]);
