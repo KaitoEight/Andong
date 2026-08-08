@@ -159,8 +159,8 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
       {list.length === 0 ? (
         <div className="card p-10 text-center text-slate-400 text-sm">Chưa có hoá đơn nào.</div>
       ) : (
-        <div className="card overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="table-container">
+          <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase">
                 <th className="px-4 py-2.5 text-left">Mã HĐ</th>

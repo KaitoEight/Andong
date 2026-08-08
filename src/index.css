@@ -71,9 +71,9 @@
            focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-150;
   }
 
-  /* Custom Table Design */
+  /* Custom Table Design: Tự động cuộn ngang mượt mà trên di động */
   .table-container {
-    @apply w-full overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm;
+    @apply w-full overflow-x-auto scroll-soft rounded-2xl border border-slate-200/70 bg-white shadow-sm;
   }
 
   .table-header {

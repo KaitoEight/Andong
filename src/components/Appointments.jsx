@@ -223,7 +223,7 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
 
       {/* Appointments Data Table */}
       <div className="table-container">
-        <table className="w-full text-left border-collapse text-xs">
+        <table className="w-full min-w-[720px] text-left border-collapse text-xs">
           <thead>
             <tr className="bg-slate-50/90 border-b border-slate-200/80">
               <Th label="STT" sortKey={null} className="text-center w-12" />

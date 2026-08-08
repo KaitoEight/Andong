@@ -201,7 +201,7 @@ export default function Services({ data, setData, openAdd, registerAdd }) {
         </div>
 
         <div className="table-container">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full min-w-[650px] text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50/90 border-b border-slate-200/80">
                 <th className="p-3 text-center w-12 font-bold text-slate-500">STT</th>

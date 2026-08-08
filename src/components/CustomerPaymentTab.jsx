@@ -128,7 +128,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
 
       {/* Invoices List Table */}
       <div className="table-container">
-        <table className="w-full text-left border-collapse text-xs">
+        <table className="w-full min-w-[640px] text-left border-collapse text-xs">
           <thead>
             <tr className="bg-slate-50/90 border-b border-slate-200/80">
               <th className="p-3 w-12 text-center font-bold text-slate-500">STT</th>

@@ -91,7 +91,7 @@ function StaffList({ data, setData, openAdd, registerAdd }) {
         </div>
       ) : (
         <div className="table-container">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full min-w-[640px] text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50/90 border-b border-slate-200/80 font-bold text-slate-500 uppercase">
                 <th className="p-3">Mã NV</th>
@@ -295,7 +295,7 @@ function StaffUsers({ openAdd, registerAdd }) {
 
       {/* Users Table */}
       <div className="table-container">
-        <table className="w-full text-left border-collapse text-xs">
+        <table className="w-full min-w-[640px] text-left border-collapse text-xs">
           <thead>
             <tr className="bg-slate-50/90 border-b border-slate-200/80 font-bold text-slate-500 uppercase">
               <th className="p-3 w-12 text-center">STT</th>

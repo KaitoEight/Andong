@@ -194,8 +194,8 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
           </div>
         </div>
 
-        <div className="overflow-x-auto text-xs">
-          <table className="w-full text-left">
+        <div className="overflow-x-auto scroll-soft text-xs">
+          <table className="w-full min-w-[720px] text-left">
             <thead>
               <tr className="bg-slate-50 text-slate-500 uppercase font-semibold">
                 <th className="p-2 border-r border-b border-slate-100 text-center w-10">#</th>

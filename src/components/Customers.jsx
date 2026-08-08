@@ -188,7 +188,7 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
               </div>
             </div>
 
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[750px] text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50/90 border-b border-slate-200/80 text-slate-600 font-semibold uppercase tracking-wider">
                   <th className="p-3 w-12 text-center">STT</th>

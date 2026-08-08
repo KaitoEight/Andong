@@ -61,8 +61,8 @@ function AccHistory({ data }) {
       {services.length === 0 ? (
         <div className="card p-10 text-center text-slate-400 text-sm">Không có dịch vụ nào trong khoảng thời gian này.</div>
       ) : (
-        <div className="card overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="table-container">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="bg-slate-50 text-xs font-medium text-slate-500 uppercase">
                 <th className="px-4 py-2.5 text-left">Ngày</th>
@@ -132,8 +132,8 @@ function AccFund({ data }) {
       {dates.length === 0 ? (
         <div className="card p-10 text-center text-slate-400 text-sm">Chưa có phát sinh tháng này.</div>
       ) : (
-        <div className="card overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="table-container">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="bg-slate-50 text-xs font-medium text-slate-500 uppercase">
                 <th className="px-4 py-2.5 text-left">Ngày</th>
