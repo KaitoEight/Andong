@@ -247,10 +247,10 @@ export default function App() {
 
       // ── Nhân Viên ─────────────────────────────────────────────────────────
       case "staff-list":
-        return <Staff data={safeData} setData={setData} openAdd={setAdding} registerAdd={registerAdd} />;
+        return <Staff data={safeData} setData={setData} openAdd={setAdding} registerAdd={registerAdd} perms={perms} onPerms={updatePerms} />;
       case "staff-users":
       case "staff-schedule":
-        return <Staff data={safeData} setData={setData} view={view} />;
+        return <Staff data={safeData} setData={setData} view={view} openAdd={setAdding} registerAdd={registerAdd} perms={perms} onPerms={updatePerms} />;
       case "staff-perm":
         return <Staff data={safeData} setData={setData} view={view} perms={perms} onPerms={updatePerms} />;
 

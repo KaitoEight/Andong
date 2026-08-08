@@ -3,10 +3,8 @@ import { NAV } from "./constants";
 export const ROLES = ["Quản lý", "Bác sĩ", "Lễ tân", "Kế toán"];
 export const ADMIN_ROLE = "Quản lý";
 
-// Nhóm menu luôn cho phép mọi vai trò
 const ALWAYS = ["tong-quan"];
 
-// Quyền mặc định theo vai trò (Quản lý = tất cả)
 const BASE = {
   "Bác sĩ":  ["lich-hen", "cham-soc", "khach-hang", "dich-vu", "bao-cao"],
   "Lễ tân":  ["lich-hen", "cham-soc", "khach-hang", "dich-vu", "tich-hop"],
@@ -14,7 +12,7 @@ const BASE = {
 };
 
 export function defaultPerms() {
-  const out = {};
+  const out = { users: {} };
   for (const role of ROLES) {
     out[role] = {};
     for (const g of NAV) {
@@ -25,18 +23,19 @@ export function defaultPerms() {
   return out;
 }
 
-const KEY = "denta:perms:v1";
+const KEY = "denta:perms:v2";
 
 export function loadPerms() {
   try {
     const def = defaultPerms();
     const saved = JSON.parse(localStorage.getItem(KEY) || "null");
     if (!saved) return def;
+    const result = { ...def, ...saved, users: saved.users || {} };
     for (const role of ROLES) {
-      saved[role] = { ...def[role], ...(saved[role] || {}) };
-      if (role === ADMIN_ROLE) for (const g of NAV) saved[role][g.key] = true;
+      result[role] = { ...def[role], ...(saved[role] || {}) };
+      if (role === ADMIN_ROLE) for (const g of NAV) result[role][g.key] = true;
     }
-    return saved;
+    return result;
   } catch {
     return defaultPerms();
   }
@@ -46,9 +45,25 @@ export function savePerms(perms) {
   try { localStorage.setItem(KEY, JSON.stringify(perms)); } catch { /* ignore */ }
 }
 
-export function canAccess(role, groupKey, perms) {
-  const r = role || ADMIN_ROLE;
-  if (r === ADMIN_ROLE) return true;
+export function canAccess(roleOrUser, groupKey, perms) {
+  if (!roleOrUser) return true;
+  
+  let role = roleOrUser;
+  let username = "";
+  
+  if (typeof roleOrUser === "object") {
+    role = roleOrUser.role || ADMIN_ROLE;
+    username = (roleOrUser.username || "").toLowerCase();
+  }
+  
+  if (role === ADMIN_ROLE) return true;
   if (ALWAYS.includes(groupKey)) return true;
-  return !!perms?.[r]?.[groupKey];
+
+  // Kiểm tra quyền riêng của User (nếu có)
+  if (username && perms?.users?.[username] && perms.users[username][groupKey] !== undefined) {
+    return !!perms.users[username][groupKey];
+  }
+
+  // Nếu không có quyền riêng, áp dụng theo vai trò
+  return !!perms?.[role]?.[groupKey];
 }

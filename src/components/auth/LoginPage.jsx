@@ -130,9 +130,9 @@ export default function LoginPage({ onLogin, onGoRegister }) {
           <div className="mt-6 pt-4 border-t border-slate-800 text-center">
             <p className="text-[11px] text-slate-400 mb-2 font-medium">Tài khoản thử nghiệm nhanh:</p>
             <div className="flex flex-wrap justify-center gap-2">
-              <button onClick={() => setQuickUser("admin", "123456")}
+              <button onClick={() => setQuickUser("admin@gmail.com", "admin123")}
                 className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-emerald-400 font-medium border border-slate-700 transition">
-                Quản lý (admin)
+                Admin (admin@gmail.com)
               </button>
               <button onClick={() => setQuickUser("bacsi", "123456")}
                 className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-sky-400 font-medium border border-slate-700 transition">
