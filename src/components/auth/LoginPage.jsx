@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { LogIn, Lock, User, Sparkles, ShieldCheck, CheckCircle2, Globe } from "lucide-react";
+import { LogIn, Lock, User, Sparkles, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { login } from "../../utils/auth";
 import { inputCls, btnPrimary } from "../ui/Field";
 
-export default function LoginPage({ onLogin, onGoRegister, onGoPublicWebsite }) {
+export default function LoginPage({ onLogin, onGoRegister }) {
   const [form, setForm]     = useState({ username: "", password: "" });
   const [error, setError]   = useState("");
   const [loading, setLoading] = useState(false);
@@ -125,16 +125,6 @@ export default function LoginPage({ onLogin, onGoRegister, onGoPublicWebsite }) 
               {loading ? "Đang xử lý..." : "Đăng Nhập Vui Lòng"}
             </button>
           </form>
-
-          {onGoPublicWebsite && (
-            <button
-              type="button"
-              onClick={onGoPublicWebsite}
-              className="w-full mt-3 py-2.5 rounded-xl text-xs font-bold text-emerald-400 bg-slate-800/80 border border-slate-700/80 hover:bg-slate-700 transition flex items-center justify-center gap-2"
-            >
-              <Globe size={15} /> Xem Website Giới Thiệu Khách Hàng (Public Site)
-            </button>
-          )}
 
           {/* Quick Demo Login Preset Buttons */}
           <div className="mt-6 pt-4 border-t border-slate-800 text-center">

@@ -29,7 +29,7 @@ import { loadData, saveData } from "./src/utils/storage";
 import { getSession, clearSession } from "./src/utils/auth";
 import { findNavChild, pathForView, viewForPath } from "./src/utils/constants";
 import { loadPerms, savePerms, canAccess, ROLES, ADMIN_ROLE } from "./src/utils/perms";
-import PublicWebsite   from "./src/components/PublicWebsite";
+import { Lock } from "lucide-react";
 
 const DEFAULT_VIEW = "dashboard";
 
@@ -62,11 +62,11 @@ export default function App() {
   const [perms, setPermsState] = useState(() => loadPerms());
   const [previewRole, setPreviewRole] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isPublicSite, setIsPublicSite] = useState(() => window.location.hash === "#website");
   const addRef = useRef(() => {});
 
   const updatePerms = (p) => { setPermsState(p); savePerms(p); };
   const openCustomer = (id, tab = "thong-tin") => { setMobileOpen(false); setView("customers"); setDetail({ id, tab }); };
+  // Điều hướng menu: luôn đóng menu mobile và thoát trang chi tiết khách
   const navigate = (v) => { setMobileOpen(false); setDetail(null); setView(v); };
 
   useEffect(() => { if (user) loadData().then(setData); }, [user]);
@@ -75,18 +75,14 @@ export default function App() {
   // Đồng bộ địa chỉ URL theo trạng thái hiện tại
   useEffect(() => {
     const cur = (window.location.hash || "").replace(/^#/, "");
-    const want = isPublicSite ? "/website" : detail ? detailHash(detail.id, detail.tab) : pathForView(view);
+    const want = detail ? detailHash(detail.id, detail.tab) : pathForView(view);
     if (cur !== want) window.location.hash = want;
-  }, [view, detail, isPublicSite]);
+  }, [view, detail]);
 
   // Bắt nút Back/Forward của trình duyệt
   useEffect(() => {
     const onHash = () => {
       const p = parseHash();
-      if (window.location.hash === "#website" || window.location.hash === "#/website") {
-        setIsPublicSite(true);
-        return;
-      }
       if (p.type === "detail") {
         setDetail((d) => (d && d.id === p.id && d.tab === p.tab) ? d : { id: p.id, tab: p.tab });
       } else {
@@ -109,23 +105,12 @@ export default function App() {
 
   const registerAdd = (fn) => { addRef.current = fn; };
 
-  const handleLogin = (loggedInUser) => { setIsPublicSite(false); setUser(loggedInUser); setData(null); setView(DEFAULT_VIEW); setPreviewRole(null); setDetail(null); };
+  const handleLogin = (loggedInUser) => { setUser(loggedInUser); setData(null); setView(DEFAULT_VIEW); setPreviewRole(null); setDetail(null); };
   const handleLogout = () => { clearSession(); setUser(null); setData(null); setAdding(null); setView(DEFAULT_VIEW); setPreviewRole(null); setDetail(null); };
-
-  // Nếu chuyển sang trang Web công khai dành cho Khách hàng
-  if (isPublicSite) {
-    return (
-      <PublicWebsite
-        onGoInternal={() => { setIsPublicSite(false); window.location.hash = ""; }}
-        data={data || { appts: [], customers: [] }}
-        setData={setData}
-      />
-    );
-  }
 
   if (!user) {
     return authPage === "login"
-      ? <LoginPage onLogin={handleLogin} onGoRegister={() => setAuthPage("register")} onGoPublicWebsite={() => setIsPublicSite(true)} />
+      ? <LoginPage onLogin={handleLogin} onGoRegister={() => setAuthPage("register")} />
       : <RegisterPage onGoLogin={() => setAuthPage("login")} />;
   }
 
@@ -294,7 +279,7 @@ export default function App() {
       <div className="flex-1 min-w-0 flex flex-col">
         <Header view={view} setView={navigate} onAdd={() => addRef.current()} user={viewUser} perms={perms}
           previewRole={previewRole} onExitPreview={() => changePreview(null)} onLogout={handleLogout}
-          onToggleMobile={() => setMobileOpen((o) => !o)} onOpenPublicWebsite={() => setIsPublicSite(true)} />
+          onToggleMobile={() => setMobileOpen((o) => !o)} />
         <main className="p-4 flex-1 overflow-y-auto scroll-soft" key={view}>{renderView()}</main>
       </div>
 
