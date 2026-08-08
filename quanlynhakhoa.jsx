@@ -273,11 +273,13 @@ export default function App() {
   return (
     <div className="h-screen overflow-hidden app-bg text-slate-700 text-sm flex">
       <Sidebar view={view} setView={navigate} user={viewUser} onLogout={handleLogout} perms={perms}
-        realRole={realRole} previewRole={previewRole} onPreviewRole={changePreview} />
+        realRole={realRole} previewRole={previewRole} onPreviewRole={changePreview}
+        mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
 
       <div className="flex-1 min-w-0 flex flex-col">
         <Header view={view} setView={navigate} onAdd={() => addRef.current()} user={viewUser} perms={perms}
-          previewRole={previewRole} onExitPreview={() => changePreview(null)} onLogout={handleLogout} />
+          previewRole={previewRole} onExitPreview={() => changePreview(null)} onLogout={handleLogout}
+          onToggleMobile={() => setMobileOpen((o) => !o)} />
         <main className="p-4 flex-1 overflow-y-auto scroll-soft" key={view}>{renderView()}</main>
       </div>
 
