@@ -222,6 +222,41 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
     );
   }
 
+  const syncServicesToTreatment = () => {
+    if (!custServices.length) {
+      alert("Khách hàng chưa có dịch vụ nào trong bảng dịch vụ đã chốt.");
+      return;
+    }
+    const existingNames = new Set(treatments.map((t) => t.serviceName).filter(Boolean));
+    const missing = custServices.filter((s) => !existingNames.has(s.name));
+
+    if (!missing.length) {
+      alert("Tất cả dịch vụ đã chốt đều đã có trong nhật ký điều trị!");
+      return;
+    }
+
+    const newRecs = missing.map((l) => ({
+      id: uid("tr"),
+      date: l.date || todayStr(),
+      time: l.time || new Date().toTimeString().slice(0, 5),
+      serviceId: l.serviceId || "",
+      serviceName: l.name,
+      status: "Đang điều trị",
+      completion: 0,
+      doctor: l.staff || l.consultant || doctors[0]?.name || "",
+      tech: "",
+      support: "",
+      content: l.note ? `Nạp từ dịch vụ: ${l.name} (${l.note})` : `Nạp từ dịch vụ: ${l.name}`,
+    }));
+
+    setData({
+      ...data,
+      customers: data.customers.map((x) =>
+        x.id === customer.id ? { ...x, treatments: [...(x.treatments || []), ...newRecs] } : x
+      ),
+    });
+  };
+
   // ────────────────────────────────────────────────────────── LIST MODE ──
   return (
     <div>
@@ -230,6 +265,11 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
         <div className="flex items-center justify-between p-3 border-b border-slate-100">
           <div className="flex items-center gap-3 text-slate-400"><Filter size={16} /><Info size={16} /></div>
           <div className="flex items-center gap-2">
+            {custServices.length > 0 && (
+              <button onClick={syncServicesToTreatment} className="px-3 py-1.5 rounded bg-sky-600 text-white text-xs font-medium hover:bg-sky-700 flex items-center gap-1.5" title="Tự động đồng bộ các dịch vụ đã chốt sang tab Điều trị">
+                <RotateCw size={13} /> Nạp Dịch Vụ Đã Chốt ({custServices.length})
+              </button>
+            )}
             <button onClick={() => { setForm(blank); setEditId(null); setMode("add"); }} className="px-3 py-1.5 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 flex items-center gap-1.5"><Plus size={14} /> Điều trị</button>
             <button className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm font-medium flex items-center gap-1 hover:bg-slate-800"><Printer size={13} /> In <ChevronDown size={12} /></button>
           </div>

@@ -57,7 +57,34 @@ export default function CustomerServiceTab({ data, setData, customer }) {
       consultant, staff: responsible, closed,
       date: todayStr(), time: new Date().toTimeString().slice(0, 5),
     }));
-    setData({ ...data, customers: data.customers.map((c) => c.id === customer.id ? { ...c, services: [...(c.services || []), ...recs] } : c) });
+
+    // Tự động chuyển các dịch vụ đã chốt trỏ sang tab Nhật Ký Điều Trị
+    const autoTreatments = selected.map((l) => ({
+      id: uid("tr"),
+      date: todayStr(),
+      time: new Date().toTimeString().slice(0, 5),
+      serviceId: l.serviceId,
+      serviceName: l.name,
+      status: "Đang điều trị",
+      completion: 0,
+      doctor: responsible || consultant || "",
+      tech: "",
+      support: "",
+      content: l.note ? `Chốt dịch vụ: ${l.name} (${l.note})` : `Chốt dịch vụ: ${l.name}`,
+    }));
+
+    setData({
+      ...data,
+      customers: data.customers.map((c) =>
+        c.id === customer.id
+          ? {
+              ...c,
+              services: [...(c.services || []), ...recs],
+              treatments: [...(c.treatments || []), ...autoTreatments],
+            }
+          : c
+      ),
+    });
     setSelected([]); setMode("list");
   };
 
