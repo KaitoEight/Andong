@@ -137,12 +137,22 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
 
   const save = () => {
     if (!valid) return;
+    const targetCust = data.customers.find((c) => c.id === custId);
+    const code = ed?.code || ("LH" + String((data.appts || []).length + 1).padStart(3, "0"));
+    const sName = serviceIds.map((sid) => svcName(sid)).filter(Boolean).join(", ") || category;
+
     const payload = {
+      code,
       customerId: custId,
+      customerName: targetCust?.name || "",
+      customerCode: targetCust?.code || "",
+      phone: targetCust?.phone || "",
+      service: sName,
+      serviceName: sName,
       serviceIds,
-      serviceId: serviceIds[0] || "",       // tương thích hiển thị cũ
+      serviceId: serviceIds[0] || "",
       doctors,
-      doctor: doctors[0] || "",             // tương thích hiển thị cũ
+      doctor: doctors[0] || "",
       tech,
       date,
       time: hhmm(hour, minute),
@@ -157,7 +167,7 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
     if (ed) {
       setData({ ...data, appts: data.appts.map((a) => a.id === ed.id ? { ...a, ...payload } : a) });
     } else {
-      setData({ ...data, appts: [...data.appts, { id: uid("ap"), status: "pending", ...payload }] });
+      setData({ ...data, appts: [...(data.appts || []), { id: uid("ap"), status: "pending", ...payload }] });
     }
     onClose();
   };

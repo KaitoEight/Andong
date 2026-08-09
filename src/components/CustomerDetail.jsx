@@ -1,5 +1,5 @@
 import {
-  ChevronLeft, Gem, Settings, Printer, Pencil,
+  ChevronLeft, Gem, Settings, Printer, Pencil, CalendarPlus, Trash2
 } from "lucide-react";
 import Avatar from "./ui/Avatar";
 import Odontogram from "./Odontogram";
@@ -276,11 +276,81 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
         ) : tab === "thanh-toan" ? (
           <CustomerPaymentTab data={data} setData={setData} customer={c} />
         ) : tab === "lich-hen" ? (
-          <Card title="Tất cả lịch hẹn">
-            {appts.length === 0 ? <div className="text-xs text-slate-400">Chưa có.</div> : (
-              <div className="space-y-3">{appts.map((a) => (
-                <div key={a.id} className="text-xs border-b border-slate-50 pb-2"><div className="font-medium"><span className="text-emerald-600 text-sm">{a.time} {fmtDate(a.date)}</span></div><div className="text-slate-500">{a.category || "Điều trị"} · {svcOf(a)} · {a.doctor}</div></div>
-              ))}</div>
+          <Card
+            title="Tất Cả Lịch Hẹn Khách Hàng"
+            action={
+              <button
+                onClick={() => onAddAppt?.(c.id)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 transition"
+              >
+                <CalendarPlus size={15} /> Tạo Lịch Hẹn Mới
+              </button>
+            }
+          >
+            {appts.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-xs">
+                Khách hàng chưa có lịch hẹn nào. Nhấn "Tạo Lịch Hẹn Mới" để lên lịch khám.
+              </div>
+            ) : (
+              <div className="overflow-x-auto scroll-soft">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-100">
+                      <th className="p-2.5 text-center w-10">STT</th>
+                      <th className="p-2.5">Mã Lịch</th>
+                      <th className="p-2.5">Ngày / Giờ Khám</th>
+                      <th className="p-2.5">Dịch Vụ / Nội Dung</th>
+                      <th className="p-2.5">Bác Sĩ Phụ Trách</th>
+                      <th className="p-2.5 text-center">Trạng Thái</th>
+                      <th className="p-2.5 text-center w-28">Thao Tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {appts.map((a, idx) => (
+                      <tr key={a.id} className="hover:bg-slate-50 transition">
+                        <td className="p-2.5 text-center font-bold text-slate-400">{idx + 1}</td>
+                        <td className="p-2.5 font-mono text-emerald-700 font-bold">{a.code || ("LH" + String(idx + 1).padStart(3, "0"))}</td>
+                        <td className="p-2.5 font-semibold text-slate-800">{a.time} - {fmtDate(a.date)}</td>
+                        <td className="p-2.5 text-slate-700">
+                          <div className="font-medium">{svcOf(a) || a.category || "Tư vấn"}</div>
+                          {a.note && <div className="text-[10px] text-slate-400 truncate max-w-xs">{a.note}</div>}
+                        </td>
+                        <td className="p-2.5 text-slate-600 font-medium">{a.doctor || a.doctors?.join(", ") || "—"}</td>
+                        <td className="p-2.5 text-center">
+                          <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                            {a.status === "pending" ? "Chưa đến" : a.status === "arrived" ? "Đã đến" : a.status === "done" ? "Hoàn thành" : a.status === "cancelled" ? "Đã hủy" : "Đã xác nhận"}
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => onEditAppt?.(a)}
+                              title="Sửa lịch hẹn"
+                              className="w-7 h-7 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition grid place-items-center"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (window.confirm("Hủy lịch hẹn này?")) {
+                                  setData({
+                                    ...data,
+                                    appts: data.appts.map((x) => (x.id === a.id ? { ...x, status: "cancelled" } : x)),
+                                  });
+                                }
+                              }}
+                              title="Hủy lịch hẹn"
+                              className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </Card>
         ) : tab === "tien-su" ? (

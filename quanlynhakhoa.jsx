@@ -166,7 +166,9 @@ export default function App() {
       return (
         <CustomerDetail data={safeData} setData={setData} customer={cust} tab={detail.tab}
           onTab={(t) => setDetail((d) => ({ ...d, tab: t }))}
-          onBack={() => setDetail(null)} onEdit={setEditCust} />
+          onBack={() => setDetail(null)} onEdit={setEditCust}
+          onAddAppt={(id) => { setApptCustId(id); }}
+          onEditAppt={(appt) => { setEditAppt(appt); }} />
       );
     }
 
