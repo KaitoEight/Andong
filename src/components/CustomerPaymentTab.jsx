@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import {
   Plus, Printer, Wallet, CreditCard, CheckCircle2,
-  Receipt, Trash2, Building2
+  Receipt, Trash2, Building2, Pencil
 } from "lucide-react";
 import Modal from "./ui/Modal";
 import Field, { inputCls, btnPrimary } from "./ui/Field";
@@ -9,6 +9,7 @@ import { uid, todayStr, fmtDate, fmtVND } from "../utils/helpers";
 
 export default function CustomerPaymentTab({ data, setData, customer }) {
   const [modal, setModal]           = useState(false);
+  const [editModal, setEditModal]   = useState(null); // { invoice, amount, method, staff, note }
   const [printModal, setPrintModal] = useState(null); // { invoice }
 
   const invoices = useMemo(() =>
@@ -59,46 +60,66 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
     });
 
     setModal(false);
-    setForm({ ...form, amount: "" });
-  };
-
-  const handleDeletePayment = (inv) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xoá phiếu thu thanh toán "${inv.code}"?`)) return;
-    setData({
-      ...data,
-      invoices: (data.invoices || []).filter((i) => i.id !== inv.id),
+    setForm({
+      amount: "",
+      method: "Chuyển khoản",
+      staff: data.staff?.[0]?.name || "Lễ tân",
+      note: "Thanh toán chi phí dịch vụ nha khoa",
     });
   };
 
+  const handleSaveEditPayment = () => {
+    if (!editModal) return;
+    const paidAmt = Number(editModal.amount) || 0;
+    if (paidAmt <= 0) {
+      alert("Vui lòng nhập số tiền thu hợp lệ (> 0).");
+      return;
+    }
+
+    const updatedInvoices = (data.invoices || []).map((inv) =>
+      inv.id === editModal.invoice.id
+        ? {
+            ...inv,
+            paid: paidAmt,
+            method: editModal.method,
+            staff: editModal.staff,
+            note: editModal.note,
+          }
+        : inv
+    );
+
+    setData({ ...data, invoices: updatedInvoices });
+    setEditModal(null);
+  };
+
+  const handleDeletePayment = (inv) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa đợt thanh toán ${inv.code} - ${fmtVND(inv.paid)}?`)) return;
+    const updatedInvoices = (data.invoices || []).filter((i) => i.id !== inv.id);
+    setData({ ...data, invoices: updatedInvoices });
+  };
+
   return (
-    <div className="space-y-6 animate-fade">
-      {/* Financial Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0 shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-300 font-medium">Tổng Chi Phí Dịch Vụ</span>
-            <Receipt size={20} className="text-emerald-400" />
-          </div>
-          <div className="mt-2 text-2xl font-extrabold font-heading text-white">{fmtVND(totalBilled)}</div>
-          <div className="text-[11px] text-slate-400 mt-1">{custServices.length} hạng mục dịch vụ</div>
+    <div className="space-y-4 animate-fade">
+      {/* Debt KPI Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-white">
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 shadow-md">
+          <div className="text-xs font-semibold text-emerald-100 uppercase tracking-wider">Tổng Chi Phí Dịch Vụ</div>
+          <div className="mt-2 text-2xl font-extrabold font-heading">{fmtVND(totalBilled)}</div>
+          <div className="text-[11px] text-emerald-200 mt-1">Dựa trên bảng dịch vụ chốt</div>
         </div>
 
-        <div className="card p-5 bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-0 shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-emerald-100 font-medium">Đã Thanh Toán</span>
-            <CheckCircle2 size={20} className="text-emerald-200" />
-          </div>
-          <div className="mt-2 text-2xl font-extrabold font-heading text-white">{fmtVND(totalPaid)}</div>
-          <div className="text-[11px] text-emerald-100 mt-1">{invoices.length} đợt phiếu thu</div>
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-700 shadow-md">
+          <div className="text-xs font-semibold text-teal-100 uppercase tracking-wider">Đã Thanh Toán</div>
+          <div className="mt-2 text-2xl font-extrabold font-heading">{fmtVND(totalPaid)}</div>
+          <div className="text-[11px] text-teal-200 mt-1">{invoices.length} đợt thu tiền</div>
         </div>
 
-        <div className={`card p-5 border-0 shadow-md ${totalDebt > 0 ? "bg-gradient-to-br from-rose-600 to-red-700 text-white" : "bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700"}`}>
-          <div className="flex items-center justify-between">
-            <span className={`text-xs font-medium ${totalDebt > 0 ? "text-rose-100" : "text-slate-500"}`}>Còn Nợ Phải Thu</span>
-            <Wallet size={20} className={totalDebt > 0 ? "text-rose-200" : "text-slate-400"} />
+        <div className={`p-4 rounded-2xl shadow-md ${totalDebt > 0 ? "bg-gradient-to-br from-rose-600 to-red-700" : "bg-gradient-to-br from-slate-700 to-slate-800"}`}>
+          <div className={`text-xs font-semibold uppercase tracking-wider ${totalDebt > 0 ? "text-rose-100" : "text-slate-300"}`}>
+            {totalDebt > 0 ? "Còn Nợ Cần Thu" : "Tình Trạng Nợ"}
           </div>
           <div className="mt-2 text-2xl font-extrabold font-heading">{fmtVND(totalDebt)}</div>
-          <div className={`text-[11px] mt-1 ${totalDebt > 0 ? "text-rose-100" : "text-slate-500"}`}>
+          <div className={`text-[11px] mt-1 ${totalDebt > 0 ? "text-rose-100" : "text-slate-400"}`}>
             {totalDebt > 0 ? "Cần thu thêm đợt tới" : "Đã hoàn thành nghĩa vụ"}
           </div>
         </div>
@@ -108,7 +129,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
       <div className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="font-bold text-slate-900 text-base font-heading">Lịch Sử & Phiếu Thu Thanh Toán</h3>
-          <p className="text-xs text-slate-500">Quản lý các đợt thu tiền, in phiếu thu và xoá đợt thanh toán</p>
+          <p className="text-xs text-slate-500">Quản lý các đợt thu tiền, in phiếu thu, sửa và xoá đợt thanh toán</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -137,7 +158,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
               <th className="p-3 font-bold text-slate-500">Hình Thức Thanh Toán</th>
               <th className="p-3 text-right font-bold text-slate-500">Số Tiền Thu</th>
               <th className="p-3 font-bold text-slate-500">Người Thu</th>
-              <th className="p-3 text-center w-24 font-bold text-slate-500">Thao tác</th>
+              <th className="p-3 text-center w-28 font-bold text-slate-500">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -171,6 +192,10 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
                       <button onClick={() => setPrintModal({ invoice: inv })} title="In phiếu thu"
                         className="w-7 h-7 rounded-lg text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition grid place-items-center">
                         <Printer size={15} />
+                      </button>
+                      <button onClick={() => setEditModal({ invoice: inv, amount: String(inv.paid), method: inv.method || "Tiền mặt", staff: inv.staff || "Lễ tân", note: inv.note || "" })} title="Chỉnh sửa phiếu thu"
+                        className="w-7 h-7 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition grid place-items-center">
+                        <Pencil size={15} />
                       </button>
                       <button onClick={() => handleDeletePayment(inv)} title="Xoá đợt thanh toán này"
                         className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center">
@@ -226,6 +251,51 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
             <button onClick={handleSavePayment} className={btnPrimary + " w-full justify-center py-3 text-sm font-bold"}>
               <CheckCircle2 size={18} /> Lưu Phiếu Thu Thanh Toán
             </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal Chỉnh Sửa Phiếu Thu */}
+      {editModal && (
+        <Modal title={`Sửa Phiếu Thu ${editModal.invoice.code}`} onClose={() => setEditModal(null)}>
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-xs space-y-1">
+              <div className="flex justify-between text-slate-600"><span>Mã phiếu:</span> <b className="font-mono text-emerald-700">{editModal.invoice.code}</b></div>
+              <div className="flex justify-between text-slate-600"><span>Ngày thu:</span> <b>{fmtDate(editModal.invoice.date)} {editModal.invoice.time || ""}</b></div>
+            </div>
+
+            <Field label="Số tiền thu (VNĐ)">
+              <input
+                type="number"
+                value={editModal.amount}
+                onChange={(e) => setEditModal({ ...editModal, amount: e.target.value })}
+                className={inputCls + " font-bold text-emerald-700 text-base"}
+                autoFocus
+              />
+            </Field>
+
+            <Field label="Hình thức thanh toán">
+              <select value={editModal.method} onChange={(e) => setEditModal({ ...editModal, method: e.target.value })} className={inputCls}>
+                <option value="Chuyển khoản">Chuyển khoản ngân hàng</option>
+                <option value="Tiền mặt">Tiền mặt tại quầy</option>
+                <option value="Quẹt thẻ POS">Quẹt thẻ ngân hàng (POS)</option>
+              </select>
+            </Field>
+
+            <Field label="Người thu tiền">
+              <select value={editModal.staff} onChange={(e) => setEditModal({ ...editModal, staff: e.target.value })} className={inputCls}>
+                {(data.staff || []).map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
+              </select>
+            </Field>
+
+            <Field label="Ghi chú đợt thu">
+              <input value={editModal.note} onChange={(e) => setEditModal({ ...editModal, note: e.target.value })} placeholder="Nội dung ghi chú..." className={inputCls} />
+            </Field>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setEditModal(null)} className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">Hủy</button>
+              <button onClick={handleSaveEditPayment} className={btnPrimary}>Cập Nhật Phiếu Thu</button>
+            </div>
           </div>
         </Modal>
       )}

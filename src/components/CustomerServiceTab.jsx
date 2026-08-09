@@ -1,13 +1,16 @@
 import { useState } from "react";
 import {
-  Plus, Trash2, Printer, ChevronDown, Filter, Info, ClipboardList, Pill, X,
+  Plus, Trash2, Printer, ChevronDown, Filter, Info, ClipboardList, Pill, X, Pencil, CheckCircle2
 } from "lucide-react";
+import Modal from "./ui/Modal";
+import Field, { inputCls, btnPrimary } from "./ui/Field";
 import { uid, todayStr, fmtDate } from "../utils/helpers";
 
 const num = (n) => (n || 0).toLocaleString("vi-VN");
 
 export default function CustomerServiceTab({ data, setData, customer }) {
-  const [mode, setMode] = useState("list");   // list | add
+  const [mode, setMode]       = useState("list");   // list | add
+  const [editItem, setEditItem] = useState(null); // Record to edit
   const records = customer.services || [];
   const staff = data.staff || [];
   const groups = [...new Set((data.services || []).map((s) => s.group).filter(Boolean))];
@@ -56,6 +59,38 @@ export default function CustomerServiceTab({ data, setData, customer }) {
     }));
     setData({ ...data, customers: data.customers.map((c) => c.id === customer.id ? { ...c, services: [...(c.services || []), ...recs] } : c) });
     setSelected([]); setMode("list");
+  };
+
+  const handleSaveEditService = () => {
+    if (!editItem) return;
+    const p = Number(editItem.price) || 0;
+    const q = Number(editItem.qty) || 1;
+    const d = Number(editItem.discount) || 0;
+    const tot = p * q - d;
+
+    const updatedServices = records.map((s) =>
+      s.id === editItem.id
+        ? {
+            ...s,
+            name: editItem.name,
+            group: editItem.group,
+            price: p,
+            qty: q,
+            discount: d,
+            total: tot,
+            consultant: editItem.consultant,
+            staff: editItem.staff,
+            note: editItem.note,
+          }
+        : s
+    );
+
+    setData({
+      ...data,
+      customers: data.customers.map((c) => (c.id === customer.id ? { ...c, services: updatedServices } : c)),
+    });
+
+    setEditItem(null);
   };
 
   const removeRecord = (id) => {
@@ -198,7 +233,7 @@ export default function CustomerServiceTab({ data, setData, customer }) {
                 <th className="p-2 border-r border-b border-slate-100">Tư Vấn</th>
                 <th className="p-2 border-r border-b border-slate-100">Ghi Chú</th>
                 <th className="p-2 border-r border-b border-slate-100">Chốt Dịch Vụ</th>
-                <th className="p-2 border-b border-slate-100 text-center w-12">Xử Lý</th>
+                <th className="p-2 border-b border-slate-100 text-center w-16">Xử Lý</th>
               </tr>
             </thead>
             <tbody>
@@ -225,7 +260,10 @@ export default function CustomerServiceTab({ data, setData, customer }) {
                     <div className="text-[11px] text-slate-400">{r.time} {fmtDate(r.date)}</div>
                   </td>
                   <td className="p-2 text-center">
-                    <button onClick={() => removeRecord(r.id)} className="text-slate-400 hover:text-rose-500"><Trash2 size={14} /></button>
+                    <div className="flex items-center justify-center gap-1.5">
+                      <button onClick={() => setEditItem({ ...r, price: String(r.price || 0), qty: String(r.qty || 1), discount: String(r.discount || 0) })} title="Sửa dịch vụ" className="text-slate-400 hover:text-amber-600"><Pencil size={14} /></button>
+                      <button onClick={() => removeRecord(r.id)} title="Xóa dịch vụ" className="text-slate-400 hover:text-rose-500"><Trash2 size={14} /></button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -233,6 +271,70 @@ export default function CustomerServiceTab({ data, setData, customer }) {
           </table>
         </div>
       </div>
+
+      {/* Modal Chỉnh Sửa Dịch Vụ */}
+      {editItem && (
+        <Modal title={`Chỉnh Sửa Dịch Vụ: ${editItem.name}`} onClose={() => setEditItem(null)}>
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-xs space-y-1">
+              <div className="flex justify-between text-slate-600"><span>Mã dịch vụ:</span> <b className="font-mono text-emerald-700">{editItem.code}</b></div>
+              <div className="flex justify-between text-slate-600"><span>Ngày chốt:</span> <b>{fmtDate(editItem.date)} {editItem.time || ""}</b></div>
+            </div>
+
+            <Field label="Tên dịch vụ">
+              <input value={editItem.name} onChange={(e) => setEditItem({ ...editItem, name: e.target.value })} className={inputCls} />
+            </Field>
+
+            <Field label="Nhóm dịch vụ">
+              <select value={editItem.group} onChange={(e) => setEditItem({ ...editItem, group: e.target.value })} className={inputCls}>
+                {groups.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </Field>
+
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Đơn giá (₫)">
+                <input type="number" value={editItem.price} onChange={(e) => setEditItem({ ...editItem, price: e.target.value })} className={inputCls + " text-right font-medium"} />
+              </Field>
+              <Field label="Số lượng">
+                <input type="number" min={1} value={editItem.qty} onChange={(e) => setEditItem({ ...editItem, qty: e.target.value })} className={inputCls + " text-center"} />
+              </Field>
+              <Field label="Giảm giá (₫)">
+                <input type="number" min={0} value={editItem.discount} onChange={(e) => setEditItem({ ...editItem, discount: e.target.value })} className={inputCls + " text-right"} />
+              </Field>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex justify-between font-bold">
+              <span>Thành tiền sau giảm:</span>
+              <span className="text-emerald-700 text-sm">{num((Number(editItem.price) || 0) * (Number(editItem.qty) || 1) - (Number(editItem.discount) || 0))} ₫</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Người tư vấn">
+                <select value={editItem.consultant || ""} onChange={(e) => setEditItem({ ...editItem, consultant: e.target.value })} className={inputCls}>
+                  <option value="">-- chọn --</option>
+                  {staff.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
+                </select>
+              </Field>
+              <Field label="Người chốt / Phụ trách">
+                <select value={editItem.staff || ""} onChange={(e) => setEditItem({ ...editItem, staff: e.target.value })} className={inputCls}>
+                  <option value="">-- chọn --</option>
+                  {staff.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
+                </select>
+              </Field>
+            </div>
+
+            <Field label="Ghi chú">
+              <textarea rows={2} value={editItem.note || ""} onChange={(e) => setEditItem({ ...editItem, note: e.target.value })} className={inputCls + " resize-none"} />
+            </Field>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setEditItem(null)} className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">Hủy</button>
+              <button onClick={handleSaveEditService} className={btnPrimary}>Cập Nhật Dịch Vụ</button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
+

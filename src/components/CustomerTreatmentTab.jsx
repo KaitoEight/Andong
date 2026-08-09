@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Plus, Trash2, Printer, ChevronDown, Filter, Info, CalendarCheck, RotateCw, Send, Check,
+  Plus, Trash2, Printer, ChevronDown, Filter, Info, CalendarCheck, RotateCw, Send, Check, Pencil
 } from "lucide-react";
 import { uid, todayStr, fmtDate } from "../utils/helpers";
 
@@ -8,8 +8,9 @@ const inp = "w-full px-3 py-2 rounded border border-slate-200 text-sm focus:outl
 const lbl = "text-[13px] font-medium text-slate-600 mb-1 block";
 
 export default function CustomerTreatmentTab({ data, setData, customer }) {
-  const [mode, setMode] = useState("list");
-  const [quick, setQuick] = useState("");
+  const [mode, setMode]     = useState("list"); // list | add | edit
+  const [editId, setEditId] = useState(null);
+  const [quick, setQuick]   = useState("");
   const treatments = customer.treatments || [];
   const staff   = data.staff || [];
   const doctors = staff.filter((s) => s.role === "Bác Sĩ");
@@ -28,7 +29,7 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
     setData({ ...data, appts: data.appts.map((a) => a.id === latest.id ? { ...a, status: next } : a) });
   };
 
-  // ── Form thêm điều trị ─────────────────────────────────────────────────
+  // ── Form điều trị ─────────────────────────────────────────────────
   const blank = {
     serviceId: "", serviceName: "", status: "Đang điều trị", completion: "",
     doctor: doctors[0]?.name || "", tech: "", support: "",
@@ -45,6 +46,28 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
       || custServices.find((s) => s.id === form.serviceId)?.name
       || data.services.find((s) => s.id === form.serviceId)?.name || "";
     if (!sName && !form.content.trim()) return;
+
+    if (mode === "edit" && editId) {
+      const updatedTreatments = treatments.map((t) =>
+        t.id === editId
+          ? {
+              ...t,
+              ...form,
+              serviceName: sName,
+              completion: Number(form.completion) || (form.status === "Điều trị xong" ? 100 : 0),
+            }
+          : t
+      );
+      setData({
+        ...data,
+        customers: data.customers.map((x) => (x.id === customer.id ? { ...x, treatments: updatedTreatments } : x)),
+      });
+      setEditId(null);
+      setForm(blank);
+      setMode("list");
+      return;
+    }
+
     const rec = {
       id: uid("tr"), date: todayStr(), time: new Date().toTimeString().slice(0, 5),
       ...form, serviceName: sName,
@@ -53,6 +76,24 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
     persist(rec);
     setForm(blank);
     if (!cont) setMode("list");
+  };
+
+  const startEdit = (r) => {
+    setEditId(r.id);
+    setForm({
+      serviceId: r.serviceId || "",
+      serviceName: r.serviceName || "",
+      status: r.status || "Đang điều trị",
+      completion: r.completion !== undefined ? String(r.completion) : "",
+      doctor: r.doctor || doctors[0]?.name || "",
+      tech: r.tech || "",
+      support: r.support || "",
+      content: r.content || "",
+      nextDate: r.nextDate || "",
+      nextContent: r.nextContent || "",
+      diseaseNote: r.diseaseNote || "",
+    });
+    setMode("edit");
   };
 
   const quickAdd = () => {
@@ -80,7 +121,7 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
         <div className="flex gap-8 text-xs text-slate-500 mt-1"><span>Chưa Đến</span><span>Đã Đến</span></div>
         <div className="flex items-center gap-2 mt-2">
           <span className="text-slate-500 text-sm font-medium">#{appts.length || 0}</span>
-          <button onClick={() => setMode("list")} className="px-3 py-1 rounded bg-slate-400 text-white text-xs font-medium hover:bg-slate-500">Quay lại</button>
+          <button onClick={() => { setMode("list"); setEditId(null); }} className="px-3 py-1 rounded bg-slate-400 text-white text-xs font-medium hover:bg-slate-500">Quay lại</button>
           <button onClick={cycleStatus} disabled={!latest} className={`px-3 py-1 rounded text-white text-xs font-medium ${latest ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-300"}`}>Chuyển trạng thái</button>
         </div>
       </div>
@@ -94,13 +135,13 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
     </div>
   );
 
-  // ─────────────────────────────────────────────────────────── ADD MODE ──
-  if (mode === "add") {
+  // ─────────────────────────────────────────────────────────── ADD / EDIT MODE ──
+  if (mode === "add" || mode === "edit") {
     return (
       <div>
         {StatusBar}
         <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-emerald-500 text-emerald-600 text-sm font-medium bg-white mb-4">
-          <CalendarCheck size={15} /> Điều trị
+          <CalendarCheck size={15} /> {mode === "edit" ? "Cập Nhật Phiên Điều Trị" : "Điều Trị Mới"}
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -173,9 +214,9 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
-          <button onClick={() => { setMode("list"); setForm(blank); }} className="px-5 py-2 rounded bg-slate-400 text-white text-sm font-medium hover:bg-slate-500">Đóng</button>
-          <button onClick={() => save(true)} className="px-5 py-2 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">Lưu và tiếp tục</button>
-          <button onClick={() => save(false)} className="px-5 py-2 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">Lưu</button>
+          <button onClick={() => { setMode("list"); setEditId(null); setForm(blank); }} className="px-5 py-2 rounded bg-slate-400 text-white text-sm font-medium hover:bg-slate-500">Đóng</button>
+          {mode === "add" && <button onClick={() => save(true)} className="px-5 py-2 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">Lưu và tiếp tục</button>}
+          <button onClick={() => save(false)} className="px-5 py-2 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">{mode === "edit" ? "Cập Nhật Phiên Điều Trị" : "Lưu"}</button>
         </div>
       </div>
     );
@@ -189,7 +230,7 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
         <div className="flex items-center justify-between p-3 border-b border-slate-100">
           <div className="flex items-center gap-3 text-slate-400"><Filter size={16} /><Info size={16} /></div>
           <div className="flex items-center gap-2">
-            <button onClick={() => { setForm(blank); setMode("add"); }} className="px-3 py-1.5 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 flex items-center gap-1.5"><Plus size={14} /> Điều trị</button>
+            <button onClick={() => { setForm(blank); setEditId(null); setMode("add"); }} className="px-3 py-1.5 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 flex items-center gap-1.5"><Plus size={14} /> Điều trị</button>
             <button className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm font-medium flex items-center gap-1 hover:bg-slate-800"><Printer size={13} /> In <ChevronDown size={12} /></button>
           </div>
         </div>
@@ -205,7 +246,7 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
                 <th className="p-2 border-r border-b border-slate-100">PT/KTV</th>
                 <th className="p-2 border-r border-b border-slate-100">Nội Dung</th>
                 <th className="p-2 border-r border-b border-slate-100 text-center">Lịch Hẹn</th>
-                <th className="p-2 border-b border-slate-100 text-center w-12">Xử Lý</th>
+                <th className="p-2 border-b border-slate-100 text-center w-16">Xử Lý</th>
               </tr>
             </thead>
             <tbody>
@@ -226,7 +267,12 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
                   <td className="p-2 border-r border-slate-50 text-slate-600">{r.tech || ""}</td>
                   <td className="p-2 border-r border-slate-50 text-slate-600">{r.content || ""}</td>
                   <td className="p-2 border-r border-slate-50 text-center text-slate-500">{r.nextDate ? <span title={"Kế tiếp: " + fmtDate(r.nextDate)}><CalendarCheck size={15} className="inline text-slate-600" /></span> : ""}</td>
-                  <td className="p-2 text-center"><button onClick={() => remove(r.id)} className="text-slate-400 hover:text-rose-500"><Trash2 size={14} /></button></td>
+                  <td className="p-2 text-center">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <button onClick={() => startEdit(r)} title="Sửa phiên điều trị" className="text-slate-400 hover:text-amber-600"><Pencil size={14} /></button>
+                      <button onClick={() => remove(r.id)} title="Xóa phiên điều trị" className="text-slate-400 hover:text-rose-500"><Trash2 size={14} /></button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
