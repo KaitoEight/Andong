@@ -47,20 +47,33 @@ function inSlot(time, slot) {
 
 export default function Appointments({ data, setData, openAdd, registerAdd, onEdit, onOpenCustomer }) {
   const [date, setDate]             = useState(todayStr());
+  const [allDatesMode, setAllDatesMode] = useState(false);
   const [activeSlot, setActiveSlot] = useState(null);
   const [q, setQ]                   = useState("");
   const [hideCancelled, setHideCancelled] = useState(false);
   const [sort, setSort]             = useState({ key: "time", dir: "asc" });
 
-  const cust = (id) => data.customers.find((c) => c.id === id);
-  const svc  = (id) => data.services.find((s) => s.id === id);
+  const cust = (id, a) => {
+    const found = (data.customers || []).find((c) => c.id === id);
+    if (found) return found;
+    if (a && (a.customerName || a.phone)) {
+      return { id: id || a.customerId, name: a.customerName || "Khách hàng", code: a.customerCode || "KH", phone: a.phone || "" };
+    }
+    return null;
+  };
+
+  const svc = (id, a) => {
+    const found = (data.services || []).find((s) => s.id === id);
+    if (found) return found;
+    return a?.service || a?.serviceName ? { name: a.service || a.serviceName } : null;
+  };
 
   registerAdd(() => openAdd("appt"));
 
-  const dayAppts = useMemo(() =>
-    data.appts.filter((a) => a.date === date),
-    [data.appts, date]
-  );
+  const dayAppts = useMemo(() => {
+    if (allDatesMode) return data.appts || [];
+    return (data.appts || []).filter((a) => a.date === date);
+  }, [data.appts, date, allDatesMode]);
 
   const slotCounts = useMemo(() =>
     TIME_SLOTS.map((s) => dayAppts.filter((a) => inSlot(a.time, s)).length),
@@ -68,14 +81,14 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
   );
 
   const sortVal = (a, key) => {
-    const c = cust(a.customerId);
-    const s = svc(a.serviceId);
+    const c = cust(a.customerId, a);
+    const s = svc(a.serviceId, a);
     switch (key) {
       case "time":    return a.time;
-      case "code":    return c?.code || "";
-      case "name":    return (c?.name || "").toLowerCase();
-      case "phone":   return c?.phone || "";
-      case "content": return (s?.name || "").toLowerCase();
+      case "code":    return c?.code || a.code || "";
+      case "name":    return (c?.name || a.customerName || "").toLowerCase();
+      case "phone":   return c?.phone || a.phone || "";
+      case "content": return (s?.name || a.service || a.serviceName || "").toLowerCase();
       default:        return a.time;
     }
   };
@@ -87,8 +100,13 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
     if (q.trim()) {
       const ql = q.toLowerCase();
       result = result.filter((a) => {
-        const c = cust(a.customerId);
-        return (c?.name + c?.phone + c?.code + svc(a.serviceId)?.name).toLowerCase().includes(ql);
+        const c = cust(a.customerId, a);
+        const name  = (c?.name || a.customerName || "").toLowerCase();
+        const code  = (c?.code || a.customerCode || a.code || "").toLowerCase();
+        const phone = (c?.phone || a.phone || "").toLowerCase();
+        const sName = (svc(a.serviceId, a)?.name || a.service || a.serviceName || "").toLowerCase();
+        const doc   = (a.doctor || a.doctors?.join(" ") || "").toLowerCase();
+        return name.includes(ql) || code.includes(ql) || phone.includes(ql) || sName.includes(ql) || doc.includes(ql);
       });
     }
     const dir = sort.dir === "asc" ? 1 : -1;
@@ -120,7 +138,7 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
 
   const Th = ({ label, sortKey, className = "" }) => {
     const active = sort.key === sortKey;
-    const Icon = !sortKey ? null : !active ? ArrowUpDown : sort.dir === "asc" ? ArrowUp : ArrowDown;
+    const Icon   = active ? (sort.dir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
     return (
       <th className={`px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider ${className}`}>
         {sortKey ? (
@@ -137,7 +155,7 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
     <div className="space-y-4 animate-fade">
       {/* Ngày điều hướng + Stat Counter Bar */}
       <div className="card p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
             <button onClick={() => setDate(shiftDate(date, -1))} className="p-1.5 rounded-lg hover:bg-white text-slate-600 transition">
               <ChevronLeft size={18} />
@@ -148,16 +166,27 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
           </div>
 
           <div>
-            <div className="font-bold text-slate-900 text-sm font-heading">{fmtDateVN(date)}</div>
-            {isToday && <span className="text-[10px] text-emerald-600 font-extrabold uppercase tracking-wider">Hôm nay</span>}
+            <div className="font-bold text-slate-900 text-sm font-heading">{allDatesMode ? "Tất Cả Lịch Hẹn Hệ Thống" : fmtDateVN(date)}</div>
+            {isToday && !allDatesMode && <span className="text-[10px] text-emerald-600 font-extrabold uppercase tracking-wider">Hôm nay</span>}
           </div>
 
-          {!isToday && (
+          {!isToday && !allDatesMode && (
             <button onClick={() => setDate(todayStr())}
               className="text-xs px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 font-bold hover:bg-emerald-100 transition flex items-center gap-1 border border-emerald-200/60">
               <CalendarDays size={13} /> Quay về Hôm nay
             </button>
           )}
+
+          <button
+            onClick={() => setAllDatesMode((v) => !v)}
+            className={`text-xs px-3 py-1 rounded-xl font-bold transition flex items-center gap-1.5 border ${
+              allDatesMode
+                ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+            }`}
+          >
+            <List size={14} /> {allDatesMode ? "Đang xem: Tất Cả Lịch Hẹn" : "Tất Cả Lịch Hẹn"}
+          </button>
         </div>
 
         {/* Counter Pills */}
@@ -240,13 +269,13 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
             {list.length === 0 ? (
               <tr>
                 <td colSpan={8} className="p-12 text-center text-slate-400 text-xs">
-                  Không tìm thấy lịch hẹn cho {isToday ? "hôm nay" : "ngày " + date}.
+                  Không tìm thấy lịch hẹn cho {allDatesMode ? "toàn bộ hệ thống" : isToday ? "hôm nay" : "ngày " + date}.
                 </td>
               </tr>
             ) : (
               list.map((a, idx) => {
-                const c   = cust(a.customerId);
-                const s   = svc(a.serviceId);
+                const c   = cust(a.customerId, a);
+                const s   = svc(a.serviceId, a);
                 const pill = STATUS_PILL[a.status] || STATUS_PILL.pending;
                 return (
                   <tr key={a.id} onClick={() => onEdit?.(a)}
@@ -255,46 +284,47 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
 
                     <td className="p-3">
                       <div className="font-bold text-slate-900 text-xs">{a.time} - {endTime(a.time, a.mins ?? s?.mins)}</div>
+                      {allDatesMode && <div className="text-[10px] text-emerald-700 font-semibold">{a.date}</div>}
                     </td>
 
                     <td className="p-3">
-                      {c ? (
+                      {c?.id ? (
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); onOpenCustomer?.(c.id); }}
                           className="font-mono text-emerald-700 font-bold hover:underline"
                           title="Xem hồ sơ khách hàng"
                         >
-                          {c.code}
+                          {c.code || a.customerCode || "KH"}
                         </button>
                       ) : (
-                        <span className="font-mono text-slate-400">—</span>
+                        <span className="font-mono text-emerald-700 font-bold">{a.customerCode || "KH"}</span>
                       )}
                     </td>
 
                     <td className="p-3">
                       <div className="flex items-center gap-2">
-                        <Avatar src={c?.avatar} name={c?.name} size={30} />
-                        {c ? (
+                        <Avatar src={c?.avatar} name={c?.name || a.customerName} size={30} />
+                        {c?.id ? (
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); onOpenCustomer?.(c.id); }}
                             className="font-bold text-slate-800 hover:text-emerald-600 hover:underline text-left"
                             title="Xem hồ sơ khách hàng"
                           >
-                            {c.name}
+                            {c.name || a.customerName}
                           </button>
                         ) : (
-                          <span className="font-bold text-slate-800">Vắng tên</span>
+                          <span className="font-bold text-slate-800">{a.customerName || "Khách hàng"}</span>
                         )}
                       </div>
                     </td>
 
-                    <td className="p-3 font-semibold text-slate-600">{c?.phone || "—"}</td>
+                    <td className="p-3 font-semibold text-slate-600">{c?.phone || a.phone || "—"}</td>
 
                     <td className="p-3">
-                      <div className="font-bold text-slate-900">{svc(a.serviceId)?.name || a.category || "Khám tư vấn"}</div>
-                      <div className="text-[11px] text-slate-500">BS: <span className="font-medium text-slate-700">{a.doctor || "Chưa phân công"}</span></div>
+                      <div className="font-bold text-slate-900">{s?.name || a.service || a.serviceName || a.category || "Khám tư vấn"}</div>
+                      <div className="text-[11px] text-slate-500">BS: <span className="font-medium text-slate-700">{a.doctor || a.doctors?.join(", ") || "Chưa phân công"}</span></div>
                     </td>
 
                     <td className="p-3 text-center">
