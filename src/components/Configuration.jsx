@@ -9,7 +9,7 @@ const CATEGORIES = [
       { label: "Chờ xác nhận", color: "bg-amber-50 text-amber-700 border-amber-200" },
       { label: "Đã xác nhận",  color: "bg-sky-50 text-sky-700 border-sky-200" },
       { label: "Đã đến",       color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-      { label: "Hoàn thành",   color: "bg-emerald-600 text-white border-emerald-600" },
+      { label: "Hoàn thành",   color: "bg-emerald-700 text-white border-emerald-600" },
       { label: "Đã hủy",       color: "bg-rose-50 text-rose-700 border-rose-200" },
       { label: "Không đến",    color: "bg-slate-100 text-slate-500 border-slate-200" },
     ],
@@ -73,7 +73,7 @@ function CfgCategory() {
         ))}
       </div>
 
-      <p className="text-xs text-slate-400 text-center">
+      <p className="text-xs text-slate-500 text-center">
         Để thêm / sửa danh mục, vui lòng liên hệ quản trị viên hệ thống.
       </p>
     </div>

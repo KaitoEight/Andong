@@ -42,8 +42,8 @@
   /* Nút bấm chính (Emerald Gradient) */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm text-white
-           bg-gradient-to-r from-emerald-600 to-teal-600 shadow-md shadow-emerald-600/20
-           hover:from-emerald-700 hover:to-teal-700 hover:shadow-lg hover:shadow-emerald-600/30
+           bg-gradient-to-r from-emerald-700 to-teal-700 shadow-md shadow-emerald-700/20
+           hover:from-emerald-800 hover:to-teal-800 hover:shadow-lg hover:shadow-emerald-700/30
            active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
@@ -67,7 +67,7 @@
 
   /* Ô nhập liệu chuẩn hóa (Input Field) */
   .input-field {
-    @apply w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 text-sm placeholder-slate-400
+    @apply w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 text-sm placeholder-slate-500
            focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-150;
   }
 
@@ -113,4 +113,27 @@
     to   { opacity: 1; }
   }
   .animate-fade { animation: fade-in 0.18s ease-out both; }
+}
+
+/* ── Truy cập (a11y) & mobile ─────────────────────────────────────────────── */
+/* Placeholder mặc định của Tailwind (gray-400) chỉ đạt ~2.5:1; slate-500 đạt 4.8:1 trên nền trắng */
+input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
+
+/* Người dùng bật "giảm chuyển động" trong hệ điều hành → tắt animation / transition */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Điện thoại: ô nhập 16px (iOS không tự phóng to trang khi chạm vào ô) và cao tối thiểu 44px (vùng bấm) */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea { font-size: 16px !important; }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select { min-height: 44px; }
 }

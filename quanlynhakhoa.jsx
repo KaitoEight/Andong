@@ -25,6 +25,7 @@ import Prescription   from "./src/components/Prescription";
 import Warehouse      from "./src/components/Warehouse";
 import Integration    from "./src/components/Integration";
 import Configuration  from "./src/components/Configuration";
+import Trash          from "./src/components/Trash";
 import { loadData, saveData } from "./src/utils/storage";
 import { getSession, clearSession } from "./src/utils/auth";
 import { findNavChild, pathForView, viewForPath } from "./src/utils/constants";
@@ -116,7 +117,7 @@ export default function App() {
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-slate-400 text-sm">
+      <div className="min-h-screen min-h-dvh flex items-center justify-center text-slate-500 text-sm" role="status">
         Đang tải dữ liệu…
       </div>
     );
@@ -157,9 +158,9 @@ export default function App() {
       const cust = safeData.customers.find((c) => c.id === detail.id);
       if (!cust) {
         return (
-          <div className="card p-12 text-center text-slate-400">
+          <div className="card p-12 text-center text-slate-500">
             Không tìm thấy khách hàng.
-            <div><button onClick={() => setDetail(null)} className="mt-3 text-emerald-600 font-medium">← Về danh sách</button></div>
+            <div><button onClick={() => setDetail(null)} className="mt-3 text-emerald-700 font-medium">← Về danh sách</button></div>
           </div>
         );
       }
@@ -182,6 +183,17 @@ export default function App() {
           <p className="text-sm text-slate-500 mt-1 max-w-sm">
             Vai trò <b>{effectiveRole}</b> không được phép xem mục này. Liên hệ quản lý để được cấp quyền.
           </p>
+        </div>
+      );
+    }
+
+    // Mục chỉ dành cho Quản lý (vd: Dữ liệu đã xoá) — máy chủ cũng kiểm tra quyền riêng
+    if (found?.child?.adminOnly && effectiveRole !== ADMIN_ROLE) {
+      return (
+        <div className="card p-12 flex flex-col items-center justify-center text-center min-h-[40vh]">
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 grid place-items-center mb-4"><Lock size={26} /></div>
+          <h2 className="text-lg font-semibold text-slate-800">Không có quyền truy cập</h2>
+          <p className="text-sm text-slate-500 mt-1 max-w-sm">Chỉ vai trò <b>Quản lý</b> mới xem được mục này.</p>
         </div>
       );
     }
@@ -262,6 +274,8 @@ export default function App() {
       case "cfg-print":
       case "cfg-log":
         return <Configuration view={view} data={safeData} />;
+      case "cfg-trash":
+        return <Trash data={safeData} setData={setData} user={viewUser} />;
 
       // ── Báo Cáo ───────────────────────────────────────────────────────────
       case "reports":
@@ -273,7 +287,12 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen overflow-hidden app-bg text-slate-700 text-sm flex">
+    <div className="h-screen h-dvh overflow-hidden app-bg text-slate-700 text-sm flex">
+      {/* Liên kết "bỏ qua menu" cho người dùng bàn phím (dùng nút, vì # đã dành cho điều hướng của app) */}
+      <button type="button" onClick={() => document.getElementById("main-content")?.focus()}
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-emerald-700 focus:text-white focus:text-sm focus:font-semibold">
+        Bỏ qua menu, tới nội dung chính
+      </button>
       <Sidebar view={view} setView={navigate} user={viewUser} onLogout={handleLogout} perms={perms}
         realRole={realRole} previewRole={previewRole} onPreviewRole={changePreview}
         mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
@@ -282,7 +301,7 @@ export default function App() {
         <Header view={view} setView={navigate} onAdd={() => addRef.current()} user={viewUser} perms={perms}
           previewRole={previewRole} onExitPreview={() => changePreview(null)} onLogout={handleLogout}
           onToggleMobile={() => setMobileOpen((o) => !o)} />
-        <main className="p-4 flex-1 overflow-y-auto scroll-soft" key={view}>{renderView()}</main>
+        <main id="main-content" tabIndex={-1} className="p-4 flex-1 overflow-y-auto scroll-soft focus:outline-none" key={view}>{renderView()}</main>
       </div>
 
       {(adding === "appt" || editAppt || apptCustId) && (

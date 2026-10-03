@@ -21,14 +21,14 @@ const TABS = [
 function tierOf(group) {
   if (group === "VIP") return { name: "Diamond", color: "text-sky-500" };
   if (group === "Khách quen") return { name: "Gold", color: "text-amber-400" };
-  return { name: "Normal", color: "text-slate-400" };
+  return { name: "Normal", color: "text-slate-500" };
 }
 
 const Card = ({ title, action, children, className = "" }) => (
   <div className={`bg-white p-4 rounded shadow-sm border border-slate-100 ${className}`}>
     {(title || action) && (
       <div className="flex justify-between items-center mb-4">
-        {title && <h3 className="font-bold text-slate-700">{title}</h3>}
+        {title && <h2 className="font-bold text-slate-700">{title}</h2>}
         {action}
       </div>
     )}
@@ -36,7 +36,7 @@ const Card = ({ title, action, children, className = "" }) => (
   </div>
 );
 
-export default function CustomerDetail({ data, setData, customer: c, tab, onTab, onBack, onEdit }) {
+export default function CustomerDetail({ data, setData, customer: c, tab, onTab, onBack, onEdit, onAddAppt, onEditAppt }) {
   const svc = (id) => data.services.find((s) => s.id === id);
   const appts = data.appts.filter((a) => a.customerId === c.id)
     .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
@@ -88,17 +88,17 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
             <Avatar src={c.avatar} name={c.name} size={56} className="border-2 border-white shadow-sm" />
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-emerald-600 font-bold">{c.code}</span>
+                <span className="text-emerald-700 font-bold">{c.code}</span>
                 <span className={`text-xs font-bold flex items-center gap-1 ${tier.color}`}><Gem size={12} /> {tier.name.toUpperCase()}</span>
               </div>
-              <h1 className="text-lg font-bold text-slate-800 uppercase">{c.name}</h1>
+              <h2 className="text-lg font-bold text-slate-800 uppercase">{c.name}</h2>
               <div className="text-emerald-700 font-medium">{c.phone}</div>
             </div>
           </div>
           <div className="flex gap-6 sm:gap-8 text-right">
             <div><div className="text-slate-500 text-xs mb-1">Phát sinh</div><div className="font-bold text-slate-800">{num(billed)}</div></div>
             <div><div className="text-slate-500 text-xs mb-1">Thanh toán</div><div className="font-bold text-slate-800">{num(paid)}</div></div>
-            <div><div className="text-slate-500 text-xs mb-1">Công nợ</div><div className={`font-bold ${debt > 0 ? "text-rose-600" : "text-slate-800"}`}>{num(debt)}</div></div>
+            <div><div className="text-slate-500 text-xs mb-1">Công nợ</div><div className={`font-bold ${debt > 0 ? "text-rose-700" : "text-slate-800"}`}>{num(debt)}</div></div>
             <div><div className="text-slate-500 text-xs mb-1">Tiền cọc</div><div className="font-bold text-slate-800">{num(deposit)}</div></div>
           </div>
         </div>
@@ -108,7 +108,7 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
           {TABS.map(([k, label]) => (
             <button key={k} onClick={() => onTab(k)}
               className={`py-2 whitespace-nowrap border-b-2 transition ${
-                tab === k ? "border-sky-600 text-sky-600 font-medium" : "border-transparent text-slate-500 hover:text-slate-800"
+                tab === k ? "border-sky-700 text-sky-700 font-medium" : "border-transparent text-slate-500 hover:text-slate-800"
               }`}>
               {label}
             </button>
@@ -126,11 +126,11 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
                 {/* Thông tin KH */}
                 <div className="md:col-span-3 bg-white p-4 rounded shadow-sm border border-slate-100">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-emerald-600 font-bold uppercase">{c.name}</h2>
-                    <button onClick={() => onEdit?.(c)} className="text-emerald-600 text-xs hover:underline flex items-center gap-1"><Pencil size={11} /> Hồ sơ</button>
+                    <h2 className="text-emerald-700 font-bold uppercase">{c.name}</h2>
+                    <button onClick={() => onEdit?.(c)} className="text-emerald-700 text-xs hover:underline flex items-center gap-1"><Pencil size={11} /> Hồ sơ</button>
                   </div>
                   <div className="space-y-2 text-xs">
-                    <p><span className="text-slate-500 inline-block w-24">Sinh nhật:</span> {fmtDate(c.dob)} <span className="font-medium mx-1">{ageFrom(c.dob)}</span> <span className="text-sky-500 font-bold">{genderSym}</span></p>
+                    <p><span className="text-slate-500 inline-block w-24">Sinh nhật:</span> {c.dobYearOnly ? c.dob.slice(0, 4) : fmtDate(c.dob)} <span className="font-medium mx-1">{ageFrom(c.dob)}</span> <span className="text-sky-500 font-bold">{genderSym}</span></p>
                     <p><span className="text-slate-500 inline-block w-24">Nghề nghiệp:</span> {c.occupation || ""}</p>
                     <p><span className="text-slate-500 inline-block w-24">Email:</span> {c.email || ""}</p>
                     <p><span className="text-slate-500 inline-block w-24">Nguồn:</span> {c.source || "—"}{c.sourceDetail ? ` - ${c.sourceDetail}` : ""}</p>
@@ -144,21 +144,21 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
-                      <div><div className="text-slate-400 text-[11px]">Nhóm khách hàng</div><div className="text-emerald-600 font-medium text-xs">{c.group || "Mới"}</div></div>
+                      <div><div className="text-slate-500 text-[11px]">Nhóm khách hàng</div><div className="text-emerald-700 font-medium text-xs">{c.group || "Mới"}</div></div>
                     </div>
                     <div className="border-t border-slate-100" />
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
-                      <div><div className="text-slate-400 text-[11px]">Người giám hộ</div><div className="text-slate-800 font-medium text-xs">{c.guardianName || "-"}</div></div>
+                      <div><div className="text-slate-500 text-[11px]">Người giám hộ</div><div className="text-slate-800 font-medium text-xs">{c.guardianName || "-"}</div></div>
                     </div>
                     <div className="border-t border-slate-100" />
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
-                      <div><div className="text-slate-400 text-[11px]">Liên hệ khẩn</div><div className="text-slate-800 font-medium text-xs">{c.emergency || "-"}</div></div>
+                      <div><div className="text-slate-500 text-[11px]">Liên hệ khẩn</div><div className="text-slate-800 font-medium text-xs">{c.emergency || "-"}</div></div>
                     </div>
                   </div>
                   <div className="mt-4 pt-3 border-t border-slate-100">
-                    <button onClick={() => onEdit?.(c)} className="text-emerald-600 text-xs font-medium flex items-center hover:text-emerald-700"><Settings size={12} className="mr-1" /> Tương tác</button>
+                    <button onClick={() => onEdit?.(c)} className="text-emerald-700 text-xs font-medium flex items-center hover:text-emerald-800"><Settings size={12} className="mr-1" /> Tương tác</button>
                   </div>
                 </div>
               </div>
@@ -179,12 +179,12 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
               ) : null}
 
               {/* Dịch vụ */}
-              <Card title="Dịch vụ" action={<button onClick={() => onTab("dich-vu")} className="text-emerald-600 text-xs hover:underline">Xem thêm</button>}>
-                {custServices.length === 0 ? <div className="text-xs text-slate-400">Chưa có dịch vụ.</div> : (
+              <Card title="Dịch vụ" action={<button onClick={() => onTab("dich-vu")} className="text-emerald-700 text-xs hover:underline">Xem thêm</button>}>
+                {custServices.length === 0 ? <div className="text-xs text-slate-500">Chưa có dịch vụ.</div> : (
                   <div className="space-y-3">
                     {custServices.slice(-8).reverse().map((r) => (
                       <div key={r.id} className="text-xs">
-                        <div className="font-medium text-slate-800"><span className="text-emerald-600">DV</span> {r.time} {fmtDate(r.date)} : {r.name}</div>
+                        <div className="font-medium text-slate-800"><span className="text-emerald-700">DV</span> {r.time} {fmtDate(r.date)} : {r.name}</div>
                         <div className="text-slate-500">Thành tiền: {num(r.total)}</div>
                       </div>
                     ))}
@@ -193,12 +193,12 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
               </Card>
 
               {/* Điều trị */}
-              <Card title="Điều trị" action={<button onClick={() => onTab("dieu-tri")} className="text-emerald-600 text-xs hover:underline">Xem thêm</button>}>
-                {(c.treatments || []).length === 0 ? <div className="text-xs text-slate-400">Chưa có.</div> : (
+              <Card title="Điều trị" action={<button onClick={() => onTab("dieu-tri")} className="text-emerald-700 text-xs hover:underline">Xem thêm</button>}>
+                {(c.treatments || []).length === 0 ? <div className="text-xs text-slate-500">Chưa có.</div> : (
                   <div className="space-y-3">
                     {[...(c.treatments || [])].reverse().slice(0, 8).map((r) => (
                       <div key={r.id} className="text-xs">
-                        <div className="font-medium text-slate-800"><span className="text-emerald-600">{r.completion || 0} %</span> {r.time} {fmtDate(r.date)} : {r.serviceName || r.content}</div>
+                        <div className="font-medium text-slate-800"><span className="text-emerald-700">{r.completion || 0} %</span> {r.time} {fmtDate(r.date)} : {r.serviceName || r.content}</div>
                         <div className="text-slate-500">BS/PT : {r.doctor || "-"} / {r.tech || "-"}</div>
                         {r.content && <div className="border-l-2 border-emerald-500 pl-2 text-slate-600">{r.content}</div>}
                       </div>
@@ -210,14 +210,14 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
 
             {/* Cột phải */}
             <div className="space-y-4">
-              <Card title="Lịch hẹn" action={<span className="text-emerald-600 text-xs">{appts.length} lịch</span>}>
-                {appts.length === 0 ? <div className="text-xs text-slate-400">Chưa có.</div> : (
+              <Card title="Lịch hẹn" action={<span className="text-emerald-700 text-xs">{appts.length} lịch</span>}>
+                {appts.length === 0 ? <div className="text-xs text-slate-500">Chưa có.</div> : (
                   <div className="space-y-3">
                     {appts.slice(0, 6).map((a) => (
                       <div key={a.id} className="flex gap-3">
                         <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
                         <div className="text-xs">
-                          <div className="font-medium"><span className="text-emerald-600 text-sm">{a.time} {fmtDate(a.date)}</span> <span className="text-slate-500">HeadOffice</span></div>
+                          <div className="font-medium"><span className="text-emerald-700 text-sm">{a.time} {fmtDate(a.date)}</span> <span className="text-slate-500">HeadOffice</span></div>
                           <div className="text-slate-500">{a.category || "Điều trị"} <span className="text-slate-800 ml-1">{svcOf(a)}</span></div>
                         </div>
                       </div>
@@ -227,12 +227,12 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
               </Card>
 
               <Card title="Thanh toán">
-                {invoices.length === 0 ? <div className="text-xs text-slate-400">Chưa có.</div> : (
+                {invoices.length === 0 ? <div className="text-xs text-slate-500">Chưa có.</div> : (
                   <div className="space-y-3">
                     {invoices.slice(0, 6).map((i) => (
                       <div key={i.id} className="flex justify-between items-center text-xs border-b border-slate-50 pb-2 last:border-0">
                         <div><div className="text-slate-500 mb-1">{fmtDate(i.date)}</div><div className="font-bold text-slate-800">{i.code}</div></div>
-                        <div className="text-right"><div className="text-slate-500 mb-1">{i.method || "Tiền mặt"}</div><div className="font-bold text-emerald-600 text-sm">{num(i.paid)}</div></div>
+                        <div className="text-right"><div className="text-slate-500 mb-1">{i.method || "Tiền mặt"}</div><div className="font-bold text-emerald-700 text-sm">{num(i.paid)}</div></div>
                       </div>
                     ))}
                   </div>
@@ -240,7 +240,7 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
               </Card>
 
               {/* Hạng thành viên */}
-              <Card title="Hạng thành viên" action={<span className="text-emerald-600 text-xs flex items-center"><Printer size={11} className="mr-1" /> Xem thêm</span>}>
+              <Card title="Hạng thành viên" action={<span className="text-emerald-700 text-xs flex items-center"><Printer size={11} className="mr-1" /> Xem thêm</span>}>
                 <div className="bg-gradient-to-br from-amber-300 to-amber-500 rounded-xl p-4 text-white relative h-36 mb-4 overflow-hidden shadow-md">
                   <div className="absolute right-4 top-4 w-10 h-8 bg-white/30 rounded" />
                   <div className="absolute bottom-4 left-4"><div className="text-xs opacity-80">Điểm tích lũy</div><div className="font-bold text-xl">0</div></div>
@@ -265,7 +265,7 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
                   <a key={i} href={f.url} target="_blank" rel="noreferrer"><img src={f.url} alt={f.name} className="w-full h-24 object-cover rounded border border-slate-200 hover:ring-2 hover:ring-emerald-400" /></a>
                 ))}
               </div>
-            ) : <div className="text-xs text-slate-400">Chưa có ảnh.</div>}
+            ) : <div className="text-xs text-slate-500">Chưa có ảnh.</div>}
             <div className="mt-4 font-medium text-slate-700 text-sm mb-2">Sơ đồ răng</div>
             <Odontogram value={c.teeth} onChange={updateTeeth} />
           </Card>
@@ -281,14 +281,14 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
             action={
               <button
                 onClick={() => onAddAppt?.(c.id)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 transition"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-800 hover:to-teal-800 transition"
               >
                 <CalendarPlus size={15} /> Tạo Lịch Hẹn Mới
               </button>
             }
           >
             {appts.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-xs">
+              <div className="p-8 text-center text-slate-500 text-xs">
                 Khách hàng chưa có lịch hẹn nào. Nhấn "Tạo Lịch Hẹn Mới" để lên lịch khám.
               </div>
             ) : (
@@ -308,12 +308,12 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
                   <tbody className="divide-y divide-slate-100">
                     {appts.map((a, idx) => (
                       <tr key={a.id} className="hover:bg-slate-50 transition">
-                        <td className="p-2.5 text-center font-bold text-slate-400">{idx + 1}</td>
+                        <td className="p-2.5 text-center font-bold text-slate-500">{idx + 1}</td>
                         <td className="p-2.5 font-mono text-emerald-700 font-bold">{a.code || ("LH" + String(idx + 1).padStart(3, "0"))}</td>
                         <td className="p-2.5 font-semibold text-slate-800">{a.time} - {fmtDate(a.date)}</td>
                         <td className="p-2.5 text-slate-700">
                           <div className="font-medium">{svcOf(a) || a.category || "Tư vấn"}</div>
-                          {a.note && <div className="text-[10px] text-slate-400 truncate max-w-xs">{a.note}</div>}
+                          {a.note && <div className="text-[10px] text-slate-500 truncate max-w-xs">{a.note}</div>}
                         </td>
                         <td className="p-2.5 text-slate-600 font-medium">{a.doctor || a.doctors?.join(", ") || "—"}</td>
                         <td className="p-2.5 text-center">
@@ -323,14 +323,14 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
                         </td>
                         <td className="p-2.5 text-center">
                           <div className="flex items-center justify-center gap-1.5">
-                            <button
+                            <button aria-label={`Sửa lịch hẹn ${a.code || ""} ${fmtDate(a.date)}`}
                               onClick={() => onEditAppt?.(a)}
                               title="Sửa lịch hẹn"
-                              className="w-7 h-7 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition grid place-items-center"
+                              className="w-7 h-7 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition grid place-items-center"
                             >
                               <Pencil size={14} />
                             </button>
-                            <button
+                            <button aria-label={`Huỷ lịch hẹn ${a.code || ""} ${fmtDate(a.date)}`}
                               onClick={() => {
                                 if (window.confirm("Hủy lịch hẹn này?")) {
                                   setData({
@@ -340,7 +340,7 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
                                 }
                               }}
                               title="Hủy lịch hẹn"
-                              className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center"
+                              className="w-7 h-7 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -358,7 +358,7 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
             {(c.allergy || c.medicalHistory) && (
               <Card title="Tổng quan y tế">
                 {c.allergy && <div className="text-sm bg-rose-50 text-rose-700 rounded px-3 py-2 mb-2"><b>⚠ Dị ứng:</b> {c.allergy}</div>}
-                {c.medicalHistory && <div className="text-sm text-slate-600"><span className="text-slate-400">Tiền sử: </span>{c.medicalHistory}</div>}
+                {c.medicalHistory && <div className="text-sm text-slate-600"><span className="text-slate-500">Tiền sử: </span>{c.medicalHistory}</div>}
               </Card>
             )}
             <CustomerRecordTab data={data} setData={setData} customer={c} field="history" title="Tiền sử bệnh"
@@ -379,7 +379,7 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
             columns={[{ key: "content", label: "Nội dung khiếu nại", type: "textarea" }, { key: "solution", label: "Hướng xử lý", type: "textarea" }, { key: "status", label: "Trạng thái", type: "select", options: ["Mới", "Đang xử lý", "Đã xử lý"] }]} />
         ) : tab === "lich-su" ? (
           <Card title="Lịch sử hoạt động">
-            {timeline.length === 0 ? <div className="text-xs text-slate-400">Chưa có hoạt động.</div> : (
+            {timeline.length === 0 ? <div className="text-xs text-slate-500">Chưa có hoạt động.</div> : (
               <ul className="space-y-3">
                 {timeline.map((e) => (
                   <li key={e.id} className="flex gap-3 text-sm">
@@ -388,7 +388,7 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
                       <span className="w-px flex-1 bg-slate-200 mt-1" />
                     </div>
                     <div className="pb-2">
-                      <div className="text-xs text-slate-400">{e.time} {fmtDate(e.date)}</div>
+                      <div className="text-xs text-slate-500">{e.time} {fmtDate(e.date)}</div>
                       <div className="text-slate-700"><span className={`font-medium ${e.color}`}>{e.kind}:</span> {e.text}</div>
                     </div>
                   </li>
@@ -398,7 +398,7 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
           </Card>
         ) : (
           <Card title={TABS.find(([k]) => k === tab)?.[1]}>
-            <div className="text-center text-slate-400 text-sm py-10">Mục này đang được cập nhật.</div>
+            <div className="text-center text-slate-500 text-sm py-10">Mục này đang được cập nhật.</div>
           </Card>
         )}
       </div>

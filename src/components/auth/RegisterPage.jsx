@@ -31,7 +31,7 @@ export default function RegisterPage({ onGoLogin }) {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen min-h-dvh bg-slate-900 text-slate-100 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-8 text-center shadow-2xl animate-pop">
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 grid place-items-center mx-auto mb-4 text-3xl">
             <CheckCircle2 size={36} />
@@ -47,7 +47,7 @@ export default function RegisterPage({ onGoLogin }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen min-h-dvh bg-slate-900 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
       <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="w-full max-w-md bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-3xl shadow-2xl p-8 animate-pop">
         <div className="text-center mb-6">
@@ -69,7 +69,7 @@ export default function RegisterPage({ onGoLogin }) {
           <div>
             <label className="text-xs font-semibold text-slate-300 block mb-1">Họ và tên</label>
             <input
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/90 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/90 text-white text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
               placeholder="Nguyễn Văn A"
               value={form.fullName}
               onChange={(e) => set("fullName", e.target.value)}
@@ -80,7 +80,7 @@ export default function RegisterPage({ onGoLogin }) {
           <div>
             <label className="text-xs font-semibold text-slate-300 block mb-1">Tên đăng nhập</label>
             <input
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/90 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/90 text-white text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
               placeholder="vd: bacsinam, nhanvien"
               value={form.username}
               onChange={(e) => set("username", e.target.value)}
@@ -92,7 +92,7 @@ export default function RegisterPage({ onGoLogin }) {
               <label className="text-xs font-semibold text-slate-300 block mb-1">Mật khẩu</label>
               <input
                 type="password"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/90 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/90 text-white text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
                 placeholder="≥ 6 ký tự"
                 value={form.password}
                 onChange={(e) => set("password", e.target.value)}
@@ -102,7 +102,7 @@ export default function RegisterPage({ onGoLogin }) {
               <label className="text-xs font-semibold text-slate-300 block mb-1">Xác nhận</label>
               <input
                 type="password"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/90 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/90 text-white text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
                 placeholder="Nhập lại"
                 value={form.confirm}
                 onChange={(e) => set("confirm", e.target.value)}
@@ -112,7 +112,7 @@ export default function RegisterPage({ onGoLogin }) {
 
           <div>
             <label className="text-xs font-semibold text-slate-300 block mb-1">Vai trò</label>
-            <select
+            <select aria-label="Vai trò"
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/90 text-white text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
               value={form.role}
               onChange={(e) => set("role", e.target.value)}

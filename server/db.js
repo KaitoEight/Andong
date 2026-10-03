@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 
 module.exports = async function connectDB() {
-  await mongoose.connect(process.env.MONGODB_URI, {
-    tls: true,
-    tlsAllowInvalidCertificates: true,
-  });
-  console.log("MongoDB connected:", process.env.MONGODB_URI.split("@")[1]);
+  const uri = process.env.MONGODB_URI;
+  // Giữ nguyên cấu hình cho MongoDB Atlas (mongodb+srv); MongoDB cài trên máy (mongodb://) không dùng TLS.
+  const opts = /^mongodb\+srv:/.test(uri || "") ? { tls: true, tlsAllowInvalidCertificates: true } : {};
+  await mongoose.connect(uri, opts);
+  console.log("MongoDB connected:", (uri || "").includes("@") ? uri.split("@")[1] : uri.replace(/^mongodb:\/\//, ""));
 };

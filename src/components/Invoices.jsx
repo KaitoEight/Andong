@@ -7,6 +7,7 @@ import Avatar from "./ui/Avatar";
 import Field, { inputCls, btnPrimary, btnGhost } from "./ui/Field";
 import { uid, todayStr, fmtVND, fmtDate } from "../utils/helpers";
 import { printInvoice } from "../utils/print";
+import { confirmAndArchive } from "../utils/trash";
 
 const METHODS = ["Tiền mặt", "Chuyển khoản", "Quẹt thẻ", "Ví điện tử"];
 
@@ -116,6 +117,17 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
     setPayFor(null);
   };
 
+  // ── Xoá hoá đơn ──────────────────────────────────────────────────────────
+  const deleteInvoice = async (inv) => {
+    const who = cust(inv.customerId)?.name;
+    const saved = await confirmAndArchive(
+      `Xoá hoá đơn ${inv.code}${who ? ` của ${who}` : ""} (${fmtVND(inv.total)}, đã thu ${fmtVND(inv.paid)})?`,
+      { type: "invoice", label: inv.code, summary: `${who || "—"} · tổng ${fmtVND(inv.total)} · đã thu ${fmtVND(inv.paid)}`, customerId: inv.customerId, payload: { invoice: inv } },
+    );
+    if (!saved) return;
+    setData({ ...data, invoices: invoices.filter((i) => i.id !== inv.id) });
+  };
+
   return (
     <div className="space-y-4">
       {/* Summary */}
@@ -146,7 +158,7 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
       {/* Toolbar */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-xs">
-          <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-2.5 text-slate-500" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm mã HĐ, tên khách..."
             className={inputCls + " pl-8"} />
         </div>
@@ -157,7 +169,7 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
 
       {/* Table */}
       {list.length === 0 ? (
-        <div className="card p-10 text-center text-slate-400 text-sm">Chưa có hoá đơn nào.</div>
+        <div className="card p-10 text-center text-slate-500 text-sm">Chưa có hoá đơn nào.</div>
       ) : (
         <div className="table-container">
           <table className="w-full text-sm min-w-[700px]">
@@ -171,7 +183,7 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
                 <th className="px-4 py-2.5 text-right">Đã Thu</th>
                 <th className="px-4 py-2.5 text-right">Còn Nợ</th>
                 <th className="px-4 py-2.5 text-center">Trạng Thái</th>
-                <th className="px-4 py-2.5 text-center"></th>
+                <th className="px-4 py-2.5 text-center"><span className="sr-only">Thao tác</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -188,7 +200,7 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
                         <Avatar src={c?.avatar} name={c?.name} size={32} />
                         <div>
                           <div className="font-medium text-slate-800">{c?.name || "—"}</div>
-                          <div className="text-xs text-slate-400">{c?.phone}</div>
+                          <div className="text-xs text-slate-500">{c?.phone}</div>
                         </div>
                       </div>
                     </td>
@@ -197,7 +209,7 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-800">{fmtVND(inv.total)}</td>
                     <td className="px-4 py-3 text-right text-emerald-700">{fmtVND(inv.paid)}</td>
-                    <td className={`px-4 py-3 text-right font-medium ${debt > 0 ? "text-rose-600" : "text-slate-400"}`}>{fmtVND(debt)}</td>
+                    <td className={`px-4 py-3 text-right font-medium ${debt > 0 ? "text-rose-600" : "text-slate-500"}`}>{fmtVND(debt)}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${st.cls}`}>{st.label}</span>
                     </td>
@@ -209,9 +221,13 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
                             <CreditCard size={12} /> Thu
                           </button>
                         )}
-                        <button onClick={() => printInvoice(inv, c)} title="In hoá đơn"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition">
+                        <button onClick={() => printInvoice(inv, c)} title="In hoá đơn" aria-label={`In hoá đơn ${inv.code}`}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition">
                           <Printer size={14} />
+                        </button>
+                        <button onClick={() => deleteInvoice(inv)} title="Xoá hoá đơn" aria-label={`Xoá hoá đơn ${inv.code}`}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition">
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>
@@ -231,7 +247,7 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
           footer={
             <>
               <button className={btnGhost} onClick={() => setShowAdd(false)}>Hủy</button>
-              <button className={btnPrimary + (formValid ? "" : " opacity-50 pointer-events-none")} onClick={saveInvoice}>Lưu</button>
+              <button disabled={!(formValid)} className={btnPrimary + (formValid ? "" : " opacity-50 cursor-not-allowed")} onClick={saveInvoice}>Lưu</button>
             </>
           }
         >
@@ -269,8 +285,8 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
                     <input placeholder="Tên dịch vụ / sản phẩm" value={it.name} onChange={(e) => setItem(idx, "name", e.target.value)}
                       className={inputCls + " flex-1 bg-white"} />
                     {form.items.length > 1 && (
-                      <button onClick={() => removeItem(idx)} title="Xoá dòng"
-                        className="p-2 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition shrink-0">
+                      <button aria-label="Xoá dòng" onClick={() => removeItem(idx)} title="Xoá dòng"
+                        className="p-2 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition shrink-0">
                         <Trash2 size={15} />
                       </button>
                     )}
@@ -294,7 +310,7 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
                 </div>
               ))}
             </div>
-            <button onClick={addItem} className="mt-2 text-sm text-emerald-600 font-medium flex items-center gap-1 hover:text-emerald-700">
+            <button onClick={addItem} className="mt-2 text-sm text-emerald-700 font-medium flex items-center gap-1 hover:text-emerald-800">
               <Plus size={14} /> Thêm dòng
             </button>
           </div>

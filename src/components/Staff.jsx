@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search, Plus, UserCheck, UserX, Users, Calendar,
   ShieldCheck, Lock, Monitor, Pencil, Trash2, Key, UserPlus, Check, X, Shield, Sparkles
@@ -9,7 +9,8 @@ import Avatar from "./ui/Avatar";
 import { uid, todayStr, toLocalISODate } from "../utils/helpers";
 import { NAV } from "../utils/constants";
 import { ROLES as ACCOUNT_ROLES, ADMIN_ROLE, canAccess } from "../utils/perms";
-import { loadLocalUsers, saveLocalUsers, register, updateUser, deleteUser } from "../utils/auth";
+import { register, updateUser, deleteUser } from "../utils/auth";
+import { apiFetch } from "../utils/api";
 
 const ROLES = ["Bác Sĩ", "Lễ Tân", "Kỹ Thuật Viên", "Y Tá"];
 
@@ -71,14 +72,14 @@ function StaffList({ data, setData, openAdd, registerAdd }) {
 
         <div className="flex items-center gap-2">
           <div className="relative w-64">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               value={q} onChange={(e) => setQ(e.target.value)}
               placeholder="Tìm tên, mã nhân viên..."
               className={inputCls + " pl-8 text-xs py-2"}
             />
           </div>
-          <button onClick={() => setShowAdd(true)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 transition">
+          <button onClick={() => setShowAdd(true)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-800 hover:to-teal-800 transition">
             <Plus size={15} /> Thêm Nhân Viên
           </button>
         </div>
@@ -86,7 +87,7 @@ function StaffList({ data, setData, openAdd, registerAdd }) {
 
       {/* table */}
       {staff.length === 0 ? (
-        <div className="card p-12 text-center text-slate-400 text-xs">
+        <div className="card p-12 text-center text-slate-500 text-xs">
           {q ? "Không tìm thấy nhân viên nào phù hợp." : "Chưa có nhân viên. Nhấn \"Thêm Nhân Viên\" để tạo mới."}
         </div>
       ) : (
@@ -150,7 +151,7 @@ function StaffList({ data, setData, openAdd, registerAdd }) {
             <>
               <button className={btnGhost} onClick={() => setShowAdd(false)}>Hủy</button>
               <button
-                className={btnPrimary + (form.name.trim() ? "" : " opacity-50 pointer-events-none")}
+                disabled={!(form.name.trim())} className={btnPrimary + (form.name.trim() ? "" : " opacity-50 cursor-not-allowed")}
                 onClick={save}
               >Lưu Hồ Sơ</button>
             </>
@@ -168,7 +169,7 @@ function StaffList({ data, setData, openAdd, registerAdd }) {
             <input className={inputCls} value={form.specialty} onChange={(e) => set("specialty", e.target.value)} placeholder="VD: Chỉnh nha, Phục hình sứ, Implant..." />
           </Field>
           <Field label="Số điện thoại">
-            <input className={inputCls} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="0900000000" />
+            <input type="tel" inputMode="tel" className={inputCls} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="0900000000" />
           </Field>
         </Modal>
       )}
@@ -178,7 +179,17 @@ function StaffList({ data, setData, openAdd, registerAdd }) {
 
 // ─── Danh Sách User & Phân Quyền Tài Khoản Đăng Nhập ──────────────────────────
 function StaffUsers({ openAdd, registerAdd }) {
-  const [users, setUsers] = useState(loadLocalUsers);
+  // Danh sách lấy từ MÁY CHỦ (nguồn thật). Trước đây lấy từ trình duyệt nên có thể hiện cả tài khoản không tồn tại.
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [listErr, setListErr] = useState("");
+  const reload = async () => {
+    const r = await apiFetch("/auth/users");
+    if (r?.ok) { setUsers(r.users || []); setListErr(""); }
+    else setListErr(r?.error || "Không tải được danh sách tài khoản (chỉ Quản lý mới xem được).");
+    setLoadingUsers(false);
+  };
+  useEffect(() => { reload(); }, []);
   const [q, setQ]         = useState("");
   const [modal, setModal] = useState(null); // { isEdit: boolean, user: {...} }
   const [error, setError] = useState("");
@@ -207,7 +218,7 @@ function StaffUsers({ openAdd, registerAdd }) {
     });
   };
 
-  const handleSaveUser = () => {
+  const handleSaveUser = async () => {
     if (!modal) return;
     const { isEdit, user } = modal;
     
@@ -218,53 +229,40 @@ function StaffUsers({ openAdd, registerAdd }) {
 
     const normUser = user.username.trim().toLowerCase();
 
-    let updatedUsers = [...users];
+    setError("");
+    // Máy chủ quyết định: chỉ khi máy chủ chấp nhận mới cập nhật danh sách và đóng hộp thoại
     if (isEdit) {
-      updatedUsers = updatedUsers.map((u) =>
-        (u.id && u.id === user.id) || u.username.toLowerCase() === normUser
-          ? { ...u, fullName: user.fullName.trim(), username: normUser, role: user.role, active: user.active }
-          : u
-      );
-      updateUser({ id: user.id, username: normUser, fullName: user.fullName.trim(), role: user.role, active: user.active, password: user.password });
+      const r = await updateUser({ id: user.id, username: normUser, fullName: user.fullName.trim(), role: user.role, active: user.active, password: user.password });
+      if (!r.ok) { setError(r.error); return; }
     } else {
       if (users.some((u) => u.username.toLowerCase() === normUser)) {
         setError("Tên đăng nhập / Email này đã tồn tại.");
         return;
       }
-      const newUser = {
-        id: "u_" + Date.now(),
-        fullName: user.fullName.trim(),
-        username: normUser,
-        role: user.role,
-        active: user.active,
-        password: user.password,
-      };
-      updatedUsers.push(newUser);
-      register({ fullName: user.fullName.trim(), username: normUser, password: user.password, role: user.role }).catch(() => {});
+      const r = await register({ fullName: user.fullName.trim(), username: normUser, password: user.password, role: user.role });
+      if (!r.ok) { setError(r.error); return; }
     }
 
-    setUsers(updatedUsers);
-    saveLocalUsers(updatedUsers);
+    await reload();
     setModal(null);
   };
 
-  const toggleUserActive = (user) => {
-    const updated = users.map((u) => (u.id === user.id || u.username === user.username ? { ...u, active: !u.active } : u));
-    setUsers(updated);
-    saveLocalUsers(updated);
-    updateUser({ username: user.username, active: !user.active });
+  const toggleUserActive = async (user) => {
+    // Khoá thật trên máy chủ: tài khoản bị khoá không đăng nhập được nữa
+    const r = await updateUser({ id: user.id, username: user.username, active: user.active === false });
+    if (!r.ok) { alert(r.error); return; }
+    await reload();
   };
 
-  const handleDeleteUser = (user) => {
+  const handleDeleteUser = async (user) => {
     if (user.username.toLowerCase().includes("admin")) {
       alert("Không thể xóa tài khoản Quản trị viên gốc.");
       return;
     }
     if (!window.confirm(`Xoá tài khoản đăng nhập "${user.username}"?`)) return;
-    const updated = users.filter((u) => u.id !== user.id && u.username !== user.username);
-    setUsers(updated);
-    saveLocalUsers(updated);
-    deleteUser(user.username);
+    const r = await deleteUser(user.username);
+    if (!r.ok) { alert(r.error); return; }
+    await reload();
   };
 
   return (
@@ -273,21 +271,21 @@ function StaffUsers({ openAdd, registerAdd }) {
       <div className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="font-bold text-slate-900 text-base font-heading flex items-center gap-2">
-            <Monitor className="text-emerald-600" size={18} /> Quản Lý Tài Khoản Đăng Nhập
+            <Monitor className="text-emerald-700" size={18} /> Quản Lý Tài Khoản Đăng Nhập
           </h2>
           <p className="text-xs text-slate-500">Admin tạo tài khoản cho nhân viên và phân công Vai trò hệ thống</p>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="relative w-64">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               value={q} onChange={(e) => setQ(e.target.value)}
               placeholder="Tìm theo tên, email, vai trò..."
               className={inputCls + " pl-8 text-xs py-2"}
             />
           </div>
-          <button onClick={() => openUserModal(null)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 transition">
+          <button onClick={() => openUserModal(null)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-800 hover:to-teal-800 transition">
             <UserPlus size={15} /> Tạo Tài Khoản Mới
           </button>
         </div>
@@ -308,12 +306,12 @@ function StaffUsers({ openAdd, registerAdd }) {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredUsers.length === 0 ? (
-              <tr><td colSpan={6} className="p-12 text-center text-slate-400">Không có tài khoản người dùng nào.</td></tr>
+              <tr><td colSpan={6} className="p-12 text-center text-slate-500" role={listErr ? "alert" : undefined}>{loadingUsers ? "Đang tải…" : (listErr || "Không có tài khoản người dùng nào.")}</td></tr>
             ) : filteredUsers.map((u, idx) => {
               const isAdmin = u.role === ADMIN_ROLE || u.username.toLowerCase().includes("admin");
               return (
                 <tr key={u.id || idx} className="table-row">
-                  <td className="p-3 text-center text-slate-400 font-bold">{idx + 1}</td>
+                  <td className="p-3 text-center text-slate-500 font-bold">{idx + 1}</td>
                   <td className="p-3">
                     <div className="font-bold text-emerald-700 font-mono text-xs">{u.username}</div>
                   </td>
@@ -344,13 +342,13 @@ function StaffUsers({ openAdd, registerAdd }) {
                   </td>
                   <td className="p-3 text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => openUserModal(u)} title="Sửa thông tin & vai trò"
-                        className="w-7 h-7 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition grid place-items-center">
+                      <button aria-label={`Sửa tài khoản ${u.username}`} onClick={() => openUserModal(u)} title="Sửa thông tin & vai trò"
+                        className="w-7 h-7 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition grid place-items-center">
                         <Pencil size={14} />
                       </button>
                       {!isAdmin && (
-                        <button onClick={() => handleDeleteUser(u)} title="Xóa tài khoản"
-                          className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center">
+                        <button aria-label={`Xoá tài khoản ${u.username}`} onClick={() => handleDeleteUser(u)} title="Xóa tài khoản"
+                          className="w-7 h-7 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center">
                           <Trash2 size={14} />
                         </button>
                       )}
@@ -470,7 +468,7 @@ function StaffSchedule({ data }) {
             <tr className="bg-slate-50/90 border-b border-slate-200/80 font-bold text-slate-500 uppercase">
               <th className="p-3">Bác Sĩ / Nhân Viên</th>
               {weekDates.map((d, i) => (
-                <th key={d} className={`p-3 text-center ${d === today ? "text-emerald-600 font-extrabold" : ""}`}>
+                <th key={d} className={`p-3 text-center ${d === today ? "text-emerald-700 font-extrabold" : ""}`}>
                   <div>{DAY_LABELS[i]}</div>
                   <div className="text-[10px] font-normal">{d.slice(8)}/{d.slice(5, 7)}</div>
                 </th>
@@ -480,7 +478,7 @@ function StaffSchedule({ data }) {
           <tbody className="divide-y divide-slate-100">
             {doctors.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-10 text-center text-slate-400">
+                <td colSpan={8} className="p-10 text-center text-slate-500">
                   Chưa có lịch khám được lên lịch tuần này.
                 </td>
               </tr>
@@ -491,7 +489,7 @@ function StaffSchedule({ data }) {
                   {weekDates.map((d) => (
                     <td key={d} className="p-3 text-center">
                       {hasAppt(doc, d) ? (
-                        <span className="inline-block w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-extrabold leading-6 text-center shadow-xs">
+                        <span className="inline-block w-6 h-6 rounded-full bg-emerald-700 text-white text-xs font-extrabold leading-6 text-center shadow-xs">
                           ✓
                         </span>
                       ) : (
@@ -545,7 +543,7 @@ function StaffPerm({ perms, onPerms }) {
             {NAV.map((g) => (
               <tr key={g.key} className="table-row">
                 <td className="p-3 font-bold text-slate-800 flex items-center gap-2">
-                  <g.icon size={16} className="text-emerald-600" /> {g.label}
+                  <g.icon size={16} className="text-emerald-700" /> {g.label}
                 </td>
                 {ACCOUNT_ROLES.map((r) => {
                   const on = canAccess(r, g.key, perms);
@@ -558,7 +556,7 @@ function StaffPerm({ perms, onPerms }) {
                         title={locked ? "Luôn bật" : on ? "Bấm để tắt" : "Bấm để bật"}
                         className={`inline-flex items-center justify-center w-7 h-7 rounded-xl text-xs font-extrabold transition ${
                           on
-                            ? "bg-emerald-600 text-white shadow-xs"
+                            ? "bg-emerald-700 text-white shadow-xs"
                             : "bg-slate-100 text-slate-300 hover:bg-slate-200"
                         } ${locked ? "opacity-70 cursor-default" : "hover:scale-105"}`}
                       >

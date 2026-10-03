@@ -62,7 +62,7 @@ export default function AddForm({ kind, data, setData, onClose }) {
       footer={
         <>
           <button className={btnGhost} onClick={onClose}>Hủy</button>
-          <button className={btnPrimary + (valid ? "" : " opacity-50 pointer-events-none")} onClick={submit}>Lưu</button>
+          <button disabled={!(valid)} className={btnPrimary + (valid ? "" : " opacity-50 cursor-not-allowed")} onClick={submit}>Lưu</button>
         </>
       }
     >
@@ -91,7 +91,7 @@ export default function AddForm({ kind, data, setData, onClose }) {
         <>
           <Field label="Họ tên"><input className={inputCls} value={f.name} onChange={(e) => set("name", e.target.value)} /></Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Số điện thoại"><input className={inputCls} value={f.phone} onChange={(e) => set("phone", e.target.value)} /></Field>
+            <Field label="Số điện thoại"><input type="tel" inputMode="tel" className={inputCls} value={f.phone} onChange={(e) => set("phone", e.target.value)} /></Field>
             <Field label="Giới tính">
               <select className={inputCls} value={f.gender} onChange={(e) => set("gender", e.target.value)}>
                 <option>Nam</option><option>Nữ</option>
@@ -155,7 +155,7 @@ export default function AddForm({ kind, data, setData, onClose }) {
             </select>
           </Field>
           <Field label="Chuyên môn"><input className={inputCls} value={f.specialty} onChange={(e) => set("specialty", e.target.value)} placeholder="VD: Chỉnh nha, Implant..." /></Field>
-          <Field label="Số điện thoại"><input className={inputCls} value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="0900000000" /></Field>
+          <Field label="Số điện thoại"><input type="tel" inputMode="tel" className={inputCls} value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="0900000000" /></Field>
         </>
       )}
 

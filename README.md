@@ -83,5 +83,18 @@ npm run dev
 ---
 
 ## Tài khoản
-Đăng ký tài khoản đầu tiên ở màn hình đăng nhập. Vai trò **Quản lý** có toàn quyền;
-phân quyền các vai trò khác chỉnh tại **Nhân Viên → Phân Quyền**.
+- Lần chạy đầu tiên (database chưa có tài khoản nào) máy chủ tự tạo **1 tài khoản Quản lý**: `admin@gmail.com`.
+  Mật khẩu lấy từ biến môi trường `INITIAL_ADMIN_PASSWORD`; nếu không đặt, máy chủ sinh mật khẩu ngẫu nhiên và
+  **in 1 lần trong log** ("Mật khẩu tạm ..."). Đăng nhập và đổi mật khẩu ngay.
+- Không có đăng ký công khai. Quản lý tạo tài khoản cho nhân viên ở **Nhân Viên & User → Danh Sách User**
+  (cũng có thể khoá / đổi vai trò / đổi mật khẩu tại đây). Phân quyền các vai trò khác chỉnh tại **Nhân Viên → Phân Quyền**.
+- Mọi thứ bị xoá trong app được lưu bản sao ở **Cấu hình → Dữ Liệu Đã Xoá** (chỉ Quản lý xem, khôi phục hoặc tải về làm backup).
+
+### Biến môi trường trên Render
+`MONGODB_URI`, `JWT_SECRET` (bắt buộc) và `INITIAL_ADMIN_PASSWORD` (tuỳ chọn, chỉ dùng khi tạo tài khoản đầu tiên).
+> **Không** commit mật khẩu / ảnh chụp màn hình có mật khẩu lên GitHub. Nếu lỡ lộ: đổi ngay mật khẩu trên MongoDB Atlas
+> (Database Access) và cập nhật `MONGODB_URI` ở Render.
+
+## Công cụ nhập dữ liệu
+`node server/scripts/import-customers.js` nhập danh sách khách từ file Excel xuất từ phần mềm cũ
+(mặc định chạy thử, không ghi gì; xem phần đầu file để biết các tuỳ chọn `--commit`, `--replace`, `--restore`).

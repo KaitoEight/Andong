@@ -5,6 +5,7 @@ import {
 import Modal from "./ui/Modal";
 import Field, { inputCls, btnPrimary } from "./ui/Field";
 import { uid, todayStr, fmtDate } from "../utils/helpers";
+import { confirmAndArchive } from "../utils/trash";
 
 const num = (n) => (n || 0).toLocaleString("vi-VN");
 
@@ -120,8 +121,15 @@ export default function CustomerServiceTab({ data, setData, customer }) {
     setEditItem(null);
   };
 
-  const removeRecord = (id) => {
-    if (!window.confirm("Xoá dịch vụ này khỏi hồ sơ khách?")) return;
+  const removeRecord = async (id) => {
+    const rec = records.find((x) => x.id === id);
+    if (!rec) return;
+    const saved = await confirmAndArchive("Xoá dịch vụ này khỏi hồ sơ khách?", {
+      type: "customerService", label: rec.name,
+      summary: `${customer.name} · ${num(rec.total)} ₫ · ${fmtDate(rec.date)}`,
+      customerId: customer.id, payload: { customerId: customer.id, record: rec },
+    });
+    if (!saved) return;
     setData({ ...data, customers: data.customers.map((c) => c.id === customer.id ? { ...c, services: (c.services || []).filter((x) => x.id !== id) } : c) });
   };
 
@@ -131,7 +139,7 @@ export default function CustomerServiceTab({ data, setData, customer }) {
   // ── Thanh sub-tab (Dịch vụ / Đơn thuốc) ─────────────────────────────────
   const SubTabs = (
     <div className="flex items-center gap-2 mb-4">
-      <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-emerald-500 text-emerald-600 text-sm font-medium bg-white">
+      <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-emerald-500 text-emerald-700 text-sm font-medium bg-white">
         <ClipboardList size={15} /> Dịch vụ
       </button>
       <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-200 text-slate-500 text-sm hover:bg-slate-50">
@@ -150,11 +158,11 @@ export default function CustomerServiceTab({ data, setData, customer }) {
           <div className="lg:col-span-2 bg-white p-4 rounded shadow-sm border border-slate-100 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div><label className={labelCls}>Người chịu trách nhiệm</label>
-                <select className={inp} value={responsible} onChange={(e) => setResponsible(e.target.value)}>
+                <select aria-label="Người chịu trách nhiệm" className={inp} value={responsible} onChange={(e) => setResponsible(e.target.value)}>
                   <option value="">-- chọn --</option>{staff.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
                 </select></div>
               <div><label className={labelCls}>Người tư vấn</label>
-                <select className={inp} value={consultant} onChange={(e) => setConsultant(e.target.value)}>
+                <select aria-label="Người tư vấn" className={inp} value={consultant} onChange={(e) => setConsultant(e.target.value)}>
                   <option value="">-- chọn --</option>{staff.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
                 </select></div>
               <div><label className={labelCls}>Lần điều trị</label>
@@ -163,11 +171,11 @@ export default function CustomerServiceTab({ data, setData, customer }) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className={labelCls}>Nhóm dịch vụ</label>
-                <select className={inp} value={line.group} onChange={(e) => setLine({ ...line, group: e.target.value, serviceId: "", name: "", price: "" })}>
+                <select aria-label="Nhóm dịch vụ" className={inp} value={line.group} onChange={(e) => setLine({ ...line, group: e.target.value, serviceId: "", name: "", price: "" })}>
                   <option value="">-- tất cả --</option>{groups.map((g) => <option key={g} value={g}>{g}</option>)}
                 </select></div>
               <div><label className={labelCls}>Dịch vụ</label>
-                <select className={inp} value={line.serviceId} onChange={(e) => pickService(e.target.value)}>
+                <select aria-label="Dịch vụ" className={inp} value={line.serviceId} onChange={(e) => pickService(e.target.value)}>
                   <option value="">-- chọn dịch vụ --</option>{svcOptions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select></div>
             </div>
@@ -180,7 +188,7 @@ export default function CustomerServiceTab({ data, setData, customer }) {
               <div><label className={labelCls}>C.Khấu (₫)</label>
                 <input type="number" min={0} className={inp + " text-right"} value={line.discount} onChange={(e) => setLine({ ...line, discount: e.target.value })} placeholder="0" /></div>
             </div>
-            <p className="text-[11px] text-slate-400">Đơn giá có thể sửa tự do khi deal giá với khách.</p>
+            <p className="text-[11px] text-slate-500">Đơn giá có thể sửa tự do khi deal giá với khách.</p>
 
             <div><label className={labelCls}>Ghi chú</label>
               <textarea rows={2} className={inp + " resize-none"} value={line.note} onChange={(e) => setLine({ ...line, note: e.target.value })} placeholder="eg .ghi chú" /></div>
@@ -189,14 +197,14 @@ export default function CustomerServiceTab({ data, setData, customer }) {
             <div className="border-t border-slate-100 pt-3">
               <div className="text-sm font-semibold text-slate-700 mb-2">Dịch vụ chọn ({selected.length})</div>
               {selected.length === 0 ? (
-                <div className="text-xs text-slate-400 py-3 border border-dashed border-slate-200 rounded text-center">Chưa chọn dịch vụ nào. Bấm "THÊM DỊCH VỤ".</div>
+                <div className="text-xs text-slate-500 py-3 border border-dashed border-slate-200 rounded text-center">Chưa chọn dịch vụ nào. Bấm "THÊM DỊCH VỤ".</div>
               ) : (
                 <div className="space-y-1.5">
                   {selected.map((l) => (
                     <div key={l.id} className="flex items-center gap-2 text-sm bg-slate-50 rounded px-2.5 py-1.5">
-                      <span className="flex-1 min-w-0 truncate">{l.name || "Dịch vụ"} <span className="text-slate-400">x{l.qty}</span></span>
+                      <span className="flex-1 min-w-0 truncate">{l.name || "Dịch vụ"} <span className="text-slate-500">x{l.qty}</span></span>
                       <span className="font-medium text-slate-700">{num(l.total)}</span>
-                      <button onClick={() => removeLine(l.id)} className="text-slate-400 hover:text-rose-500"><X size={14} /></button>
+                      <button aria-label="Bỏ dịch vụ khỏi danh sách chọn" onClick={() => removeLine(l.id)} className="text-slate-500 hover:text-rose-500"><X size={14} /></button>
                     </div>
                   ))}
                 </div>
@@ -208,7 +216,7 @@ export default function CustomerServiceTab({ data, setData, customer }) {
           <div className="space-y-4">
             <div className="bg-white p-4 rounded shadow-sm border border-slate-100">
               <div className="text-sm text-slate-500 mb-1">Thành tiền dòng hiện tại</div>
-              <div className="text-2xl font-bold text-emerald-600">{num(lineTotal)}</div>
+              <div className="text-2xl font-bold text-emerald-700">{num(lineTotal)}</div>
               <label className="flex items-center gap-2 text-sm text-slate-600 mt-3 cursor-pointer">
                 <input type="checkbox" className="w-4 h-4 rounded accent-emerald-600" checked={closed} onChange={(e) => setClosed(e.target.checked)} /> Chốt dịch vụ
               </label>
@@ -222,11 +230,11 @@ export default function CustomerServiceTab({ data, setData, customer }) {
               <div className="font-semibold text-slate-700 mb-2">Tổng</div>
               <div className="flex justify-between py-1"><span className="text-slate-500">Tổng tiền</span><span className="font-medium">{num(sumBase)}</span></div>
               <div className="flex justify-between py-1"><span className="text-slate-500">Giảm &amp; Cấn trừ</span><span className="font-medium text-rose-600">{num(sumDisc)}</span></div>
-              <div className="flex justify-between py-1 border-t border-slate-100 mt-1 pt-2"><span className="font-semibold text-slate-700">Thành tiền</span><span className="font-bold text-emerald-600 text-base">{num(sumTotal)}</span></div>
+              <div className="flex justify-between py-1 border-t border-slate-100 mt-1 pt-2"><span className="font-semibold text-slate-700">Thành tiền</span><span className="font-bold text-emerald-700 text-base">{num(sumTotal)}</span></div>
               <div className="flex gap-2 mt-3">
-                <button onClick={() => { setMode("list"); setSelected([]); }} className="flex-1 py-2 rounded-lg bg-slate-400 text-white font-medium hover:bg-slate-500 transition">Đóng</button>
+                <button onClick={() => { setMode("list"); setSelected([]); }} className="flex-1 py-2 rounded-lg bg-slate-600 text-white font-medium hover:bg-slate-700 transition">Đóng</button>
                 <button onClick={save} disabled={!selected.length}
-                  className={`flex-1 py-2 rounded-lg text-white font-semibold transition ${selected.length ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-300 cursor-not-allowed"}`}>Lưu</button>
+                  className={`flex-1 py-2 rounded-lg text-white font-semibold transition ${selected.length ? "bg-emerald-700 hover:bg-emerald-800" : "bg-slate-300 cursor-not-allowed"}`}>Lưu</button>
               </div>
             </div>
           </div>
@@ -241,11 +249,11 @@ export default function CustomerServiceTab({ data, setData, customer }) {
       {SubTabs}
       <div className="bg-white rounded shadow-sm border border-slate-100">
         <div className="flex items-center justify-between p-3 border-b border-slate-100">
-          <div className="flex items-center gap-3 text-slate-400">
+          <div className="flex items-center gap-3 text-slate-500">
             <Info size={16} /><Filter size={16} />
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setMode("add")} className="px-3 py-1.5 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 flex items-center gap-1.5"><Plus size={14} /> Thêm mới</button>
+            <button onClick={() => setMode("add")} className="px-3 py-1.5 rounded bg-emerald-700 text-white text-sm font-medium hover:bg-emerald-800 flex items-center gap-1.5"><Plus size={14} /> Thêm mới</button>
             <button className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm font-medium flex items-center gap-1 hover:bg-slate-800"><Printer size={13} /> In <ChevronDown size={12} /></button>
           </div>
         </div>
@@ -265,14 +273,14 @@ export default function CustomerServiceTab({ data, setData, customer }) {
             </thead>
             <tbody>
               {records.length === 0 ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-400">Chưa có dịch vụ. Bấm "Thêm mới".</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-slate-500">Chưa có dịch vụ. Bấm "Thêm mới".</td></tr>
               ) : records.map((r, i) => (
                 <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
                   <td className="p-2 border-r border-slate-50 text-center text-slate-500">{i + 1}</td>
                   <td className="p-2 border-r border-slate-50">
-                    <div className="font-medium text-emerald-600">{r.code} <span className="text-slate-700">{r.name}</span></div>
+                    <div className="font-medium text-emerald-700">{r.code} <span className="text-slate-700">{r.name}</span></div>
                     <div className="flex items-center gap-2 mt-1"><span className="text-slate-500">100 %</span><div className="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 w-full" /></div></div>
-                    {r.group && <div className="text-[11px] text-slate-400 mt-0.5">{r.group}</div>}
+                    {r.group && <div className="text-[11px] text-slate-500 mt-0.5">{r.group}</div>}
                   </td>
                   <td className="p-2 border-r border-slate-50 text-right">
                     {r.discount > 0 && (
@@ -284,12 +292,12 @@ export default function CustomerServiceTab({ data, setData, customer }) {
                   <td className="p-2 border-r border-slate-50 text-slate-600">{r.note || ""}</td>
                   <td className="p-2 border-r border-slate-50">
                     <div className="text-slate-700">{r.staff || "—"}</div>
-                    <div className="text-[11px] text-slate-400">{r.time} {fmtDate(r.date)}</div>
+                    <div className="text-[11px] text-slate-500">{r.time} {fmtDate(r.date)}</div>
                   </td>
                   <td className="p-2 text-center">
                     <div className="flex items-center justify-center gap-1.5">
-                      <button onClick={() => setEditItem({ ...r, price: String(r.price || 0), qty: String(r.qty || 1), discount: String(r.discount || 0) })} title="Sửa dịch vụ" className="text-slate-400 hover:text-amber-600"><Pencil size={14} /></button>
-                      <button onClick={() => removeRecord(r.id)} title="Xóa dịch vụ" className="text-slate-400 hover:text-rose-500"><Trash2 size={14} /></button>
+                      <button aria-label={`Sửa dịch vụ ${r.name}`} onClick={() => setEditItem({ ...r, price: String(r.price || 0), qty: String(r.qty || 1), discount: String(r.discount || 0) })} title="Sửa dịch vụ" className="text-slate-500 hover:text-amber-600"><Pencil size={14} /></button>
+                      <button aria-label={`Xoá dịch vụ ${r.name}`} onClick={() => removeRecord(r.id)} title="Xóa dịch vụ" className="text-slate-500 hover:text-rose-500"><Trash2 size={14} /></button>
                     </div>
                   </td>
                 </tr>

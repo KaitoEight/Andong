@@ -59,7 +59,7 @@ function AccHistory({ data }) {
       </div>
 
       {services.length === 0 ? (
-        <div className="card p-10 text-center text-slate-400 text-sm">Không có dịch vụ nào trong khoảng thời gian này.</div>
+        <div className="card p-10 text-center text-slate-500 text-sm">Không có dịch vụ nào trong khoảng thời gian này.</div>
       ) : (
         <div className="table-container">
           <table className="w-full text-sm min-w-[640px]">
@@ -77,7 +77,7 @@ function AccHistory({ data }) {
               {services.map((r) => (
                 <tr key={r.id} className="hover:bg-slate-50 transition">
                   <td className="px-4 py-3 text-slate-600">{r.time} {fmtDate(r.date)}</td>
-                  <td className="px-4 py-3"><span className="text-xs text-emerald-600 font-mono">{r.customerCode}</span></td>
+                  <td className="px-4 py-3"><span className="text-xs text-emerald-700 font-mono">{r.customerCode}</span></td>
                   <td className="px-4 py-3 font-medium text-slate-800">{r.customerName}</td>
                   <td className="px-4 py-3 text-slate-700">{r.name}</td>
                   <td className="px-4 py-3 text-slate-600 text-xs">{r.staff || "—"}</td>
@@ -130,9 +130,9 @@ function AccFund({ data }) {
       </div>
 
       {dates.length === 0 ? (
-        <div className="card p-10 text-center text-slate-400 text-sm">Chưa có phát sinh tháng này.</div>
+        <div className="card p-10 text-center text-slate-500 text-sm">Chưa có phát sinh tháng này.</div>
       ) : (
-        <div className="table-container">
+        <div className="table-container" tabIndex={0} role="region" aria-label="Bảng sổ quỹ theo ngày">
           <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="bg-slate-50 text-xs font-medium text-slate-500 uppercase">
@@ -214,7 +214,7 @@ function AccShift({ data }) {
               <div className="text-right"><div className="text-xs text-slate-500">Doanh số</div><div className={`font-bold text-sm ${col.text}`}>{fmtVND(revenue)}</div></div>
             </div>
             {items.length === 0 ? (
-              <div className="px-5 py-4 text-sm text-slate-400">Không có dịch vụ trong ca này.</div>
+              <div className="px-5 py-4 text-sm text-slate-500">Không có dịch vụ trong ca này.</div>
             ) : (
               <div className="divide-y divide-white/60">
                 {items.map((r) => (

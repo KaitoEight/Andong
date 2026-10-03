@@ -49,17 +49,17 @@ export default function Sidebar({ view, setView, user, onLogout, perms, realRole
                 Nha Khoa Victoria
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               </div>
-              <div className="text-[11px] text-slate-400 font-medium">Hệ Thống Quản Lý Nha Khoa</div>
+              <div className="text-[11px] text-slate-500 font-medium">Hệ Thống Quản Lý Nha Khoa</div>
             </div>
           </div>
 
-          <button onClick={onCloseMobile} className="md:hidden text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition" title="Đóng menu">
+          <button aria-label="Đóng menu" onClick={onCloseMobile} className="md:hidden text-slate-500 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition" title="Đóng menu">
             <X size={20} />
           </button>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto scroll-soft py-4 px-3 space-y-1">
+        <nav aria-label="Menu chính" className="flex-1 overflow-y-auto scroll-soft py-4 px-3 space-y-1">
           {groups.map((group) => {
             const isOpen    = openGroup === group.key;
             const hasActive = group.children.some((c) => c.key === view);
@@ -68,35 +68,35 @@ export default function Sidebar({ view, setView, user, onLogout, perms, realRole
               <div key={group.key} className="space-y-0.5">
                 {/* Parent item */}
                 <button
-                  onClick={() => toggleGroup(group.key)}
+                  aria-expanded={isOpen} onClick={() => toggleGroup(group.key)}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                     hasActive
                       ? "text-emerald-700 bg-emerald-50/80 font-semibold shadow-xs"
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 >
-                  <div className={`shrink-0 transition-colors ${hasActive ? "text-emerald-600" : "text-slate-400"}`}>
+                  <div className={`shrink-0 transition-colors ${hasActive ? "text-emerald-700" : "text-slate-500"}`}>
                     <group.icon size={19} />
                   </div>
                   <span className="flex-1 text-left">{group.label}</span>
                   <ChevronDown
                     size={15}
-                    className={`text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                    className={`text-slate-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
                   />
                 </button>
 
                 {/* Children */}
                 {isOpen && (
                   <ul className="mt-1 ml-4 pl-3.5 border-l-2 border-slate-100 space-y-1 animate-fade">
-                    {group.children.map((child) => {
+                    {group.children.filter((c) => !c.adminOnly || user?.role === ADMIN_ROLE).map((child) => {
                       const isActive = child.key === view;
                       return (
                         <li key={child.key}>
                           <button
-                            onClick={() => handleChild(child.key, group.key)}
+                            aria-current={isActive ? "page" : undefined} onClick={() => handleChild(child.key, group.key)}
                             className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 flex items-center gap-2.5 ${
                               isActive
-                                ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-sm shadow-emerald-600/20"
+                                ? "bg-gradient-to-r from-emerald-700 to-teal-700 text-white font-semibold shadow-sm shadow-emerald-600/20"
                                 : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                             }`}
                           >
@@ -119,7 +119,7 @@ export default function Sidebar({ view, setView, user, onLogout, perms, realRole
             <label className="text-[10px] uppercase tracking-wider text-slate-500 font-bold flex items-center gap-1 mb-1.5">
               <Eye size={12} className="text-amber-500" /> Xem thử vai trò
             </label>
-            <select
+            <select aria-label="Xem thử vai trò"
               value={previewRole || ADMIN_ROLE}
               onChange={(e) => onPreviewRole?.(e.target.value)}
               className={`w-full text-xs font-medium rounded-lg border px-2.5 py-1.5 focus:outline-none transition ${
@@ -140,18 +140,18 @@ export default function Sidebar({ view, setView, user, onLogout, perms, realRole
         {/* User Info & Logout Card */}
         <div className="border-t border-slate-100 p-3 shrink-0 bg-slate-50/50">
           <div className="flex items-center gap-3 p-2 rounded-xl bg-white border border-slate-200/60 shadow-xs">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white grid place-items-center text-sm font-bold shrink-0 shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-700 to-teal-800 text-white grid place-items-center text-sm font-bold shrink-0 shadow-xs">
               {user?.fullName?.[0]?.toUpperCase() || "?"}
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold text-slate-800 truncate">{user?.fullName}</div>
-              <div className="text-[11px] text-emerald-600 font-semibold truncate flex items-center gap-1">
+              <div className="text-[11px] text-emerald-700 font-semibold truncate flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
                 {realRole || "Quản lý"}
               </div>
             </div>
-            <button onClick={onLogout} title="Đăng xuất"
-              className="w-8 h-8 rounded-lg grid place-items-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition shrink-0">
+            <button aria-label="Đăng xuất" onClick={onLogout} title="Đăng xuất"
+              className="w-8 h-8 rounded-lg grid place-items-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition shrink-0">
               <LogOut size={16} />
             </button>
           </div>

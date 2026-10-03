@@ -8,7 +8,7 @@ const STATES = {
   caries:  { label: "Sâu răng",        cls: "bg-amber-50 border-amber-300 text-amber-800 font-bold", dot: "bg-amber-500" },
   filled:  { label: "Đã trám",         cls: "bg-sky-50 border-sky-300 text-sky-800 font-bold", dot: "bg-sky-500" },
   crown:   { label: "Bọc sứ",          cls: "bg-violet-50 border-violet-300 text-violet-800 font-bold", dot: "bg-violet-500" },
-  implant: { label: "Implant",         cls: "bg-emerald-50 border-emerald-400 text-emerald-800 font-bold", dot: "bg-emerald-600" },
+  implant: { label: "Implant",         cls: "bg-emerald-50 border-emerald-400 text-emerald-800 font-bold", dot: "bg-emerald-700" },
   treating:{ label: "Đang điều trị",   cls: "bg-orange-50 border-orange-300 text-orange-800 font-bold", dot: "bg-orange-500" },
   missing: { label: "Mất / đã nhổ",    cls: "bg-slate-100 border-slate-200 text-slate-300 line-through", dot: "bg-slate-400" },
 };
@@ -64,7 +64,7 @@ export default function Odontogram({ value = {}, onChange }) {
     <div className="space-y-4">
       {/* Sơ đồ 32 răng */}
       <div className="bg-slate-100/70 border border-slate-200/80 rounded-2xl p-5 space-y-3">
-        <div className="text-center text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Cung Răng Hàm Trên</div>
+        <div className="text-center text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Cung Răng Hàm Trên</div>
         <Row nums={UPPER} />
         <div className="flex items-center gap-3 my-2">
           <div className="flex-1 h-px bg-slate-200" />
@@ -72,7 +72,7 @@ export default function Odontogram({ value = {}, onChange }) {
           <div className="flex-1 h-px bg-slate-200" />
         </div>
         <Row nums={LOWER} />
-        <div className="text-center text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Cung Răng Hàm Dưới</div>
+        <div className="text-center text-xs font-bold text-slate-600 uppercase tracking-wider mt-1">Cung Răng Hàm Dưới</div>
       </div>
 
       {/* Legend Status Bar */}
@@ -91,7 +91,7 @@ export default function Odontogram({ value = {}, onChange }) {
             <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white grid place-items-center font-extrabold text-base shadow-sm">{sel}</span>
             <div>
               <div className="text-sm font-bold text-slate-900 font-heading">Chi Tiết Răng Số {sel}</div>
-              <div className="text-xs font-semibold text-emerald-600">{STATES[selState].label}</div>
+              <div className="text-xs font-semibold text-emerald-700">{STATES[selState].label}</div>
             </div>
           </div>
 
@@ -114,7 +114,7 @@ export default function Odontogram({ value = {}, onChange }) {
           />
         </div>
       ) : (
-        <p className="text-center text-xs text-slate-400 font-medium">Nhấp vào bất kỳ vị trí răng nào trên sơ đồ để đánh dấu tình trạng hoặc thêm ghi chú.</p>
+        <p className="text-center text-xs text-slate-500 font-medium">Nhấp vào bất kỳ vị trí răng nào trên sơ đồ để đánh dấu tình trạng hoặc thêm ghi chú.</p>
       )}
     </div>
   );

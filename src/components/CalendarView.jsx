@@ -15,8 +15,8 @@ const APPT_COLORS = {
   confirmed: "bg-violet-100 border-violet-400 text-violet-900",
   arrived:   "bg-rose-100   border-rose-400   text-rose-900",
   done:      "bg-emerald-100 border-emerald-500 text-emerald-900",
-  cancelled: "bg-slate-100  border-slate-300  text-slate-400 line-through",
-  noshow:    "bg-slate-100  border-slate-300  text-slate-500",
+  cancelled: "bg-slate-100  border-slate-300  text-slate-600 line-through",
+  noshow:    "bg-slate-100  border-slate-300  text-slate-600",
 };
 
 function getMondayOf(dateStr) {
@@ -91,11 +91,11 @@ export default function CalendarView({ data, setData }) {
 
       {/* Header tuần */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 shrink-0">
-        <button onClick={prevWeek} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition">
+        <button aria-label="Tuần trước" onClick={prevWeek} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition">
           <ChevronLeft size={18} />
         </button>
         <span className="text-sm font-semibold text-slate-700 min-w-[200px] text-center">{weekLabel}</span>
-        <button onClick={nextWeek} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition">
+        <button aria-label="Tuần sau" onClick={nextWeek} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition">
           <ChevronRight size={18} />
         </button>
         {!isCurrentWeek && (
@@ -116,13 +116,13 @@ export default function CalendarView({ data, setData }) {
           const count   = apptsByDay[d]?.length || 0;
           return (
             <div key={d} className={`text-center py-2 border-r border-slate-100 ${isToday ? "bg-emerald-50" : ""}`}>
-              <div className={`text-[11px] font-medium ${isToday ? "text-emerald-600" : "text-slate-400"}`}>
+              <div className={`text-[11px] font-medium ${isToday ? "text-emerald-700" : "text-slate-500"}`}>
                 {DAY_SHORT[i]}
               </div>
               <div className={`text-base font-bold leading-tight ${isToday ? "text-white bg-emerald-500 rounded-full w-7 h-7 grid place-items-center mx-auto" : "text-slate-800"}`}>
                 {dt.getDate()}
               </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">
+              <div className="text-[10px] text-slate-500 mt-0.5">
                 {count > 0 ? `${count} hẹn` : ""}
               </div>
             </div>
@@ -137,7 +137,7 @@ export default function CalendarView({ data, setData }) {
           {/* Cột giờ */}
           <div className="border-r border-slate-100 relative">
             {HOURS.map(h => (
-              <div key={h} className="absolute right-2 text-[11px] text-slate-400 leading-none"
+              <div key={h} className="absolute right-2 text-[11px] text-slate-500 leading-none"
                 style={{ top: (h - START_H) * HOUR_H - 7 }}>
                 {String(h).padStart(2, "0")}:00
               </div>
@@ -187,17 +187,17 @@ export default function CalendarView({ data, setData }) {
                         {a.time} · {customer?.name}
                       </div>
                       {height > 40 && (
-                        <div className="text-[10px] opacity-70 truncate">{service?.name}</div>
+                        <div className="text-[11px] truncate">{service?.name}</div>
                       )}
                       {/* Mũi tên đổi trạng thái */}
                       {height > 50 && (
                         <div className="absolute bottom-0.5 right-0.5 flex gap-0.5">
-                          <button onClick={() => cycleStatus(a, -1)}
-                            className="p-0.5 rounded hover:bg-black/10 transition">
+                          <button aria-label="Chuyển về trạng thái trước" onClick={() => cycleStatus(a, -1)}
+                            className="w-6 h-6 grid place-items-center rounded hover:bg-black/10 transition">
                             <ChevronLeft size={10} />
                           </button>
-                          <button onClick={() => cycleStatus(a, 1)}
-                            className="p-0.5 rounded hover:bg-black/10 transition">
+                          <button aria-label="Chuyển sang trạng thái tiếp theo" onClick={() => cycleStatus(a, 1)}
+                            className="w-6 h-6 grid place-items-center rounded hover:bg-black/10 transition">
                             <ChevronRight size={10} />
                           </button>
                         </div>

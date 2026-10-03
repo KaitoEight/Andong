@@ -5,6 +5,7 @@ import {
 import { uid, todayStr, toLocalISODate } from "../utils/helpers";
 import { printAppointment } from "../utils/print";
 import Avatar from "./ui/Avatar";
+import useDialog from "../utils/useDialog";
 
 const WEEK = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 const MONTHS = ["Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Tháng 6","Tháng 7","Tháng 8","Tháng 9","Tháng 10","Tháng 11","Tháng 12"];
@@ -20,24 +21,27 @@ function timeToFloat(t) { const [h, m] = t.split(":").map(Number); return h + m 
 function pct(h) { return Math.min(100, Math.max(0, ((h - RULER_START) / (RULER_END - RULER_START)) * 100)); }
 
 // Ô số tăng/giảm (giờ : phút)
-function Spinner({ value, onChange, max, step = 1 }) {
-  const up   = () => onChange((value + step) % (max + 1));
-  const down = () => onChange((value - step + (max + 1)) % (max + 1));
+function Spinner({ value, onChange, max, step = 1, label = "" }) {
+  // Vòng theo bội số của `step` (phút: 0,5,…,55) — không dùng max+1 vì max không chia hết cho step
+  const span = Math.floor(max / step) * step + step;
+  const up   = () => onChange((Math.round(value / step) * step + step) % span);
+  const down = () => onChange((Math.round(value / step) * step - step + span) % span);
   return (
     <div className="flex flex-col items-center">
-      <button onClick={up}   className="text-slate-300 hover:text-emerald-500 transition"><ChevronUp size={16} /></button>
+      <button aria-label={`Tăng ${label}`} onClick={up}   className="text-slate-300 hover:text-emerald-500 transition"><ChevronUp size={16} /></button>
       <span className="text-2xl font-bold text-slate-800 tabular-nums w-10 text-center">{pad(value)}</span>
-      <button onClick={down} className="text-slate-300 hover:text-emerald-500 transition"><ChevronDown size={16} /></button>
+      <button aria-label={`Giảm ${label}`} onClick={down} className="text-slate-300 hover:text-emerald-500 transition"><ChevronDown size={16} /></button>
     </div>
   );
 }
 
 const fieldCls =
-  "w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 " +
+  "w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-500 " +
   "focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition";
 const labelCls = "text-[13px] font-semibold text-slate-600 mb-1.5 block";
 
 export default function AppointmentForm({ data, setData, onClose, editing, initialCustomerId }) {
+  const dialogRef = useDialog(onClose);
   const today = todayStr();
   const ed = editing || null;
   const initCust = ed
@@ -174,7 +178,8 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3 animate-fade" onClick={onClose}>
-      <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl shadow-slate-900/20 ring-1 ring-slate-200/60 max-h-[94vh] flex flex-col animate-pop"
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Lịch hẹn" tabIndex={-1}
+        className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl shadow-slate-900/20 ring-1 ring-slate-200/60 max-h-[94vh] flex flex-col animate-pop focus:outline-none"
         onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}
@@ -183,16 +188,16 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
             <div className="w-1 h-9 rounded-full bg-gradient-to-b from-emerald-500 to-teal-600" />
             <div>
               <h2 className="font-bold text-slate-900 leading-tight">Lịch hẹn</h2>
-              <p className="text-xs text-slate-400">{ed ? "Sửa lịch hẹn" : "Lịch hẹn khách hàng"}</p>
+              <p className="text-xs text-slate-500">{ed ? "Sửa lịch hẹn" : "Lịch hẹn khách hàng"}</p>
             </div>
           </div>
           <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
             <button onClick={() => setTab("main")}
-              className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition ${tab === "main" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+              className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition ${tab === "main" ? "bg-white text-slate-800 shadow-sm" : "text-slate-600 hover:text-slate-800"}`}>
               Thông tin chung
             </button>
             <button onClick={() => setTab("other")}
-              className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition ${tab === "other" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+              className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition ${tab === "other" ? "bg-white text-slate-800 shadow-sm" : "text-slate-600 hover:text-slate-800"}`}>
               Khác
             </button>
           </div>
@@ -206,16 +211,16 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
             <div className="lg:w-72 shrink-0">
               {/* Điều hướng tháng */}
               <div className="flex items-center justify-between mb-3">
-                <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition"><ChevronLeft size={18} /></button>
-                <div className="font-semibold text-slate-700">{MONTHS[view.m]} <span className="text-slate-400 font-normal">{view.y}</span></div>
-                <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition"><ChevronRight size={18} /></button>
+                <button aria-label="Tháng trước" onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition"><ChevronLeft size={18} /></button>
+                <div className="font-semibold text-slate-700">{MONTHS[view.m]} <span className="text-slate-500 font-normal">{view.y}</span></div>
+                <button aria-label="Tháng sau" onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition"><ChevronRight size={18} /></button>
               </div>
 
               {/* Lưới lịch */}
               <div className="grid grid-cols-7 gap-y-1 text-center">
-                {WEEK.map((w) => <div key={w} className="text-[11px] font-semibold text-slate-400 pb-1">{w}</div>)}
+                {WEEK.map((w) => <div key={w} className="text-[11px] font-semibold text-slate-500 pb-1">{w}</div>)}
                 {cells.map((c, i) => {
-                  if (!c.cur) return <div key={i} className="text-sm text-slate-300 py-1.5">{c.day}</div>;
+                  if (!c.cur) return <div key={i} aria-hidden="true" className="text-sm text-slate-400 py-1.5">{c.day}</div>;
                   const isSel   = c.ds === date;
                   const isToday = c.ds === today;
                   return (
@@ -237,26 +242,26 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
 
               {/* Chọn giờ */}
               <div className="flex items-center justify-center gap-3 mt-4">
-                <Spinner value={hour}   onChange={setHour}   max={23} />
+                <Spinner value={hour}   onChange={setHour}   max={23} label="giờ" />
                 <span className="text-2xl font-bold text-slate-300 pb-1">:</span>
-                <Spinner value={minute} onChange={setMinute} max={55} step={5} />
+                <Spinner value={minute} onChange={setMinute} max={55} step={5} label="phút" />
               </div>
 
               {/* Tổng lịch */}
               <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-200/70 p-3">
                 <div className="text-sm">
-                  <span className="text-slate-400">Tổng lịch</span>{" "}
+                  <span className="text-slate-500">Tổng lịch</span>{" "}
                   <span className="font-semibold text-slate-700">{date.split("-").reverse().join("-")}</span>
                 </div>
                 <div className="text-sm font-medium text-slate-600 mb-2">Nha Khoa Victoria</div>
                 <div className="flex gap-2">
                   <button onClick={() => setDayPart("morning")}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${dayPart === "morning" ? "bg-white shadow-sm text-emerald-700 ring-1 ring-emerald-200" : "text-slate-500 hover:bg-white/60"}`}>
-                    Buổi sáng <span className="text-slate-400">({morningCount})</span>
+                    Buổi sáng <span className="text-slate-500">({morningCount})</span>
                   </button>
                   <button onClick={() => setDayPart("afternoon")}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${dayPart === "afternoon" ? "bg-white shadow-sm text-emerald-700 ring-1 ring-emerald-200" : "text-slate-500 hover:bg-white/60"}`}>
-                    Buổi chiều <span className="text-slate-400">({afternoonCount})</span>
+                    Buổi chiều <span className="text-slate-500">({afternoonCount})</span>
                   </button>
                 </div>
               </div>
@@ -283,17 +288,17 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                   <div className="mb-4 relative">
                     <label className={labelCls}>Khách hàng</label>
                     <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-emerald-500/30 focus-within:border-emerald-500 transition">
-                      <Search size={15} className="text-slate-400 shrink-0" />
+                      <Search size={15} className="text-slate-500 shrink-0" />
                       <span className="text-sm font-medium text-slate-500 shrink-0">Tìm kiếm</span>
                       <input
                         value={q}
                         onChange={(e) => { setQ(e.target.value); setShowResults(true); }}
                         onFocus={() => setShowResults(true)}
                         placeholder="eg .tìm tên, tìm số điện thoại, mã..."
-                        className="flex-1 min-w-0 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
+                        className="flex-1 min-w-0 text-sm text-slate-800 placeholder:text-slate-500 focus:outline-none bg-transparent"
                       />
                       {(q || custId) && (
-                        <button onClick={() => { setQ(""); setCustId(""); setShowResults(false); }}
+                        <button aria-label="Xoá tìm kiếm khách hàng" onClick={() => { setQ(""); setCustId(""); setShowResults(false); }}
                           className="text-slate-300 hover:text-rose-400 transition shrink-0">
                           <X size={16} />
                         </button>
@@ -308,7 +313,7 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                               className="w-full text-left px-3 py-2 hover:bg-emerald-50 transition flex items-center gap-2.5">
                               <Avatar src={c.avatar} name={c.name} size={30} />
                               <span className="text-sm font-medium text-slate-700 flex-1">{c.name}</span>
-                              <span className="text-xs text-slate-400">{c.phone} · {c.code}</span>
+                              <span className="text-xs text-slate-500">{c.phone} · {c.code}</span>
                             </button>
                           </li>
                         ))}
@@ -328,15 +333,15 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                     </div>
                     <div>
                       <label className={labelCls}>Số điện thoại</label>
-                      <input readOnly value={cust?.phone || ""} placeholder="eg .số điện thoại" className={fieldCls + " bg-slate-50"} />
+                      <input type="tel" inputMode="tel" readOnly value={cust?.phone || ""} placeholder="eg .số điện thoại" className={fieldCls + " bg-slate-50"} />
                     </div>
                   </div>
 
                   {/* Bác sĩ (nhiều) / KTV / Dự kiến */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                     <div>
-                      <label className={labelCls}>Bác sĩ <span className="text-slate-400 font-normal">(chọn nhiều)</span></label>
-                      <select value="" onChange={(e) => addDoctor(e.target.value)} className={fieldCls}>
+                      <label className={labelCls}>Bác sĩ <span className="text-slate-500 font-normal">(chọn nhiều)</span></label>
+                      <select aria-label="Thêm bác sĩ" value="" onChange={(e) => addDoctor(e.target.value)} className={fieldCls}>
                         <option value="">+ Thêm bác sĩ</option>
                         {doctorOptions.filter((d) => !doctors.includes(d.name)).map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
                       </select>
@@ -344,7 +349,7 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                         <div className="flex flex-wrap gap-1 mt-1.5">
                           {doctors.map((d) => (
                             <span key={d} className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium">
-                              {d}<button onClick={() => removeDoctor(d)} className="hover:text-rose-500"><X size={12} /></button>
+                              {d}<button aria-label={`Bỏ bác sĩ ${d}`} onClick={() => removeDoctor(d)} className="hover:text-rose-500"><X size={12} /></button>
                             </span>
                           ))}
                         </div>
@@ -352,14 +357,14 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                     </div>
                     <div>
                       <label className={labelCls}>Kỹ thuật viên/phụ tá</label>
-                      <select value={tech} onChange={(e) => setTech(e.target.value)} className={fieldCls}>
+                      <select aria-label="Kỹ thuật viên/phụ tá" value={tech} onChange={(e) => setTech(e.target.value)} className={fieldCls}>
                         <option value="">eg .kỹ thuật viên/phụ tá</option>
                         {techs.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className={labelCls}>Dự kiến</label>
-                      <select value={duration} onChange={(e) => setDuration(Number(e.target.value))} className={fieldCls}>
+                      <select aria-label="Thời lượng dự kiến" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className={fieldCls}>
                         {DURATIONS.map((m) => <option key={m} value={m}>{m} Phút</option>)}
                       </select>
                     </div>
@@ -369,13 +374,13 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                     <div>
                       <label className={labelCls}>Chi nhánh</label>
-                      <select className={fieldCls} defaultValue="victoria">
+                      <select aria-label="Chi nhánh" className={fieldCls} defaultValue="victoria">
                         <option value="victoria">Nha Khoa Victoria</option>
                       </select>
                     </div>
                     <div>
-                      <label className={labelCls}>Dịch vụ <span className="text-slate-400 font-normal">(chọn nhiều)</span></label>
-                      <select value="" onChange={(e) => addService(e.target.value)} className={fieldCls}>
+                      <label className={labelCls}>Dịch vụ <span className="text-slate-500 font-normal">(chọn nhiều)</span></label>
+                      <select aria-label="Thêm dịch vụ" value="" onChange={(e) => addService(e.target.value)} className={fieldCls}>
                         <option value="">+ Thêm dịch vụ</option>
                         {data.services.filter((s) => !serviceIds.includes(s.id) && s.active !== false).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </select>
@@ -383,7 +388,7 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                         <div className="flex flex-wrap gap-1 mt-1.5">
                           {serviceIds.map((id) => (
                             <span key={id} className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-medium">
-                              {svcName(id)}<button onClick={() => removeService(id)} className="hover:text-rose-500"><X size={12} /></button>
+                              {svcName(id)}<button aria-label={`Bỏ dịch vụ ${svcName(id)}`} onClick={() => removeService(id)} className="hover:text-rose-500"><X size={12} /></button>
                             </span>
                           ))}
                         </div>
@@ -410,7 +415,7 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                     </div>
                     <div>
                       <label className={labelCls}>Nguồn khách</label>
-                      <select value={source} onChange={(e) => setSource(e.target.value)} className={fieldCls}>
+                      <select aria-label="Nguồn khách" value={source} onChange={(e) => setSource(e.target.value)} className={fieldCls}>
                         <option value="">-- Chọn nguồn --</option>
                         <option>Khách vãng lai</option>
                         <option>Giới thiệu</option>
@@ -430,7 +435,7 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                     {remind && (
                       <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">
                         <span>Nhắc trước</span>
-                        <select value={remindBefore} onChange={(e) => setRemindBefore(e.target.value)}
+                        <select aria-label="Nhắc trước giờ hẹn" value={remindBefore} onChange={(e) => setRemindBefore(e.target.value)}
                           className="rounded-lg border border-slate-200 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
                           <option value="1">1 giờ</option>
                           <option value="3">3 giờ</option>
@@ -444,7 +449,7 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                   </div>
 
                   <div>
-                    <label className={labelCls}>Ghi chú nội bộ <span className="text-slate-400 font-normal">(khách không thấy)</span></label>
+                    <label className={labelCls}>Ghi chú nội bộ <span className="text-slate-500 font-normal">(khách không thấy)</span></label>
                     <textarea rows={3} value={internalNote} onChange={(e) => setInternalNote(e.target.value)} placeholder="Ghi chú riêng cho nhân viên..." className={fieldCls + " resize-none"} />
                   </div>
                 </div>
@@ -459,7 +464,7 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                   {Array.from({ length: RULER_END - RULER_START + 1 }, (_, i) => RULER_START + i).map((h) => (
                     <div key={h} className="absolute -translate-x-1/2 top-3.5" style={{ left: `${pct(h)}%` }}>
                       <div className="w-px h-2 bg-slate-300 mx-auto" />
-                      {h % 2 === 0 && <div className="text-[10px] text-slate-400 mt-0.5">{pad(h)}:00</div>}
+                      {h % 2 === 0 && <div className="text-[10px] text-slate-500 mt-0.5">{pad(h)}:00</div>}
                     </div>
                   ))}
                   {/* Lịch hẹn hiện có (xanh dương) */}
@@ -509,12 +514,12 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
             </button>
           )}
           <button onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-slate-400 text-white text-sm font-medium hover:bg-slate-500 transition">
+            className="px-5 py-2 rounded-xl bg-slate-600 text-white text-sm font-medium hover:bg-slate-700 transition">
             Đóng
           </button>
           <button onClick={save} disabled={!valid}
             className={`px-6 py-2 rounded-xl text-white text-sm font-semibold transition-all duration-200 ${
-              valid ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25 hover:-translate-y-0.5" : "bg-slate-300 cursor-not-allowed"
+              valid ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25 hover:-translate-y-0.5" : "bg-slate-200 text-slate-600 cursor-not-allowed"
             }`}>
             {ed ? "Cập nhật" : "Lưu"}
           </button>

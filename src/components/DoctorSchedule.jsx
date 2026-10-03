@@ -60,7 +60,7 @@ export default function DoctorSchedule({ data, setData, openAdd, registerAdd }) 
       {/* Date navigation */}
       <div className="card px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button
+          <button aria-label="Ngày trước"
             onClick={() => setDate(shiftDate(date, -1))}
             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition"
           >
@@ -68,9 +68,9 @@ export default function DoctorSchedule({ data, setData, openAdd, registerAdd }) 
           </button>
           <div>
             <div className="font-semibold text-slate-800 text-sm">{fmtDateVN(date)}</div>
-            {isToday && <div className="text-[11px] text-emerald-600 font-medium">HÔM NAY</div>}
+            {isToday && <div className="text-[11px] text-emerald-700 font-medium">HÔM NAY</div>}
           </div>
-          <button
+          <button aria-label="Ngày sau"
             onClick={() => setDate(shiftDate(date, 1))}
             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition"
           >
@@ -100,7 +100,7 @@ export default function DoctorSchedule({ data, setData, openAdd, registerAdd }) 
             <div key={doctor} className="card overflow-hidden">
               {/* Doctor header */}
               <div className="flex items-center gap-3 px-5 py-3 bg-emerald-50 border-b border-emerald-100">
-                <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
+                <div className="w-9 h-9 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-sm">
                   {doctor.replace("BS. ", "").charAt(0)}
                 </div>
                 <div className="flex-1">
@@ -123,7 +123,7 @@ export default function DoctorSchedule({ data, setData, openAdd, registerAdd }) 
 
               {/* Appointments */}
               {appts.length === 0 ? (
-                <div className="p-6 text-center text-sm text-slate-400">
+                <div className="p-6 text-center text-sm text-slate-500">
                   Không có lịch hẹn {isToday ? "hôm nay" : `ngày ${fmtDate(date)}`}.
                 </div>
               ) : (
@@ -140,16 +140,16 @@ export default function DoctorSchedule({ data, setData, openAdd, registerAdd }) 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-slate-800">{c?.name}</span>
-                            <span className="text-xs text-slate-400">{c?.phone}</span>
+                            <span className="text-xs text-slate-500">{c?.phone}</span>
                           </div>
                           <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
                             <Stethoscope size={11} />
                             <span>{s?.name}</span>
-                            {s?.price > 0 && <span className="text-emerald-600">{fmtVND(s.price)}</span>}
+                            {s?.price > 0 && <span className="text-emerald-700">{fmtVND(s.price)}</span>}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          {a.status === "done" && <CheckCircle2 size={16} className="text-emerald-600" />}
+                          {a.status === "done" && <CheckCircle2 size={16} className="text-emerald-700" />}
                           <Badge status={a.status} />
                         </div>
                       </div>
@@ -162,7 +162,7 @@ export default function DoctorSchedule({ data, setData, openAdd, registerAdd }) 
         })}
 
         {doctors.length === 0 && (
-          <div className="card p-12 text-center text-slate-400 text-sm">
+          <div className="card p-12 text-center text-slate-500 text-sm">
             Chưa có bác sĩ nào trong hệ thống.
           </div>
         )}

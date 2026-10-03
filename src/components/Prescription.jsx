@@ -97,23 +97,23 @@ export default function Prescription() {
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <Pill size={15} className="text-emerald-600" />
+                    <Pill size={15} className="text-emerald-700" />
                     <span className="font-semibold text-slate-800">{rx.patient}</span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">Ngày kê: {fmtDate(rx.date)}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">Ngày kê: {fmtDate(rx.date)}</div>
                   {rx.note && <div className="text-xs text-slate-500 mt-0.5">{rx.note}</div>}
                 </div>
                 <div className="flex items-center gap-1">
-                  <button
+                  <button aria-label={`In đơn thuốc của ${rx.patient}`}
                     onClick={() => printPrescription({ date: rx.date, meds: rx.medicines, note: rx.note }, { name: rx.patient })}
                     title="In đơn thuốc"
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition"
                   >
                     <Printer size={14} />
                   </button>
-                  <button
+                  <button aria-label={`Xoá đơn thuốc của ${rx.patient}`}
                     onClick={() => deleteRx(rx.id)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -156,7 +156,7 @@ export default function Prescription() {
             <>
               <button className={btnGhost} onClick={() => setShowAdd(false)}>Hủy</button>
               <button
-                className={btnPrimary + (valid ? "" : " opacity-50 pointer-events-none")}
+                disabled={!(valid)} className={btnPrimary + (valid ? "" : " opacity-50 cursor-not-allowed")}
                 onClick={save}
               >
                 Lưu đơn
@@ -208,9 +208,9 @@ export default function Prescription() {
                     onChange={(e) => setMed(m.id, "usage", e.target.value)}
                   />
                   {form.medicines.length > 1 && (
-                    <button
+                    <button aria-label="Xoá thuốc khỏi đơn"
                       onClick={() => removeMed(m.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-500 transition shrink-0"
+                      className="p-1.5 text-slate-500 hover:text-rose-500 transition shrink-0"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -220,7 +220,7 @@ export default function Prescription() {
             </div>
             <button
               onClick={addMed}
-              className="mt-2 text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1 font-medium"
+              className="mt-2 text-xs text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-medium"
             >
               <Plus size={13} /> Thêm thuốc
             </button>

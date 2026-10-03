@@ -9,6 +9,7 @@ import Avatar from "./ui/Avatar";
 import Odontogram from "./Odontogram";
 import { inputCls, btnPrimary } from "./ui/Field";
 import { fmtDate, ageFrom, fmtVND, toLocalISODate } from "../utils/helpers";
+import { confirmAndArchive } from "../utils/trash";
 
 const tr = (n) => (n / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 2 }) + " Tr";
 const trieu = (n) => (n >= 1e6 ? (n / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 2 }) + " triệu" : (n || 0).toLocaleString("vi-VN") + " đ");
@@ -103,9 +104,30 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
   const updateTeeth = (teeth) =>
     setData?.({ ...data, customers: data.customers.map((c) => c.id === sel ? { ...c, teeth } : c) });
 
-  const removeCustomer = (c) => {
-    if (!window.confirm(`Xoá khách hàng "${c.name}"? Hành động này không thể hoàn tác.`)) return;
-    setData?.({ ...data, customers: data.customers.filter((x) => x.id !== c.id) });
+  const removeCustomer = async (c) => {
+    // Xoá cả dữ liệu gắn với khách để không để lại lịch hẹn / hoá đơn mồ côi làm sai công nợ.
+    // Toàn bộ (khách + lịch hẹn + hoá đơn + chăm sóc) được lưu bản sao để Quản lý khôi phục.
+    const care = data.care || [];
+    const myAppts = apptsOf(c.id), myInv = invOf(c.id), myCare = care.filter((x) => x.customerId === c.id);
+    const counts = [
+      [myAppts.length, "lịch hẹn"],
+      [myInv.length, "hoá đơn / phiếu thu"],
+      [myCare.length, "lịch chăm sóc"],
+    ].filter(([n]) => n > 0).map(([n, l]) => `${n} ${l}`);
+    const extra = counts.length ? `\nSẽ xoá kèm: ${counts.join(", ")} của khách này.` : "";
+    const saved = await confirmAndArchive(`Xoá khách hàng "${c.name}"?${extra}`, {
+      type: "customer", label: `${c.name} (${c.code})`,
+      summary: `${c.phone || "—"}${counts.length ? " · kèm " + counts.join(", ") : ""}`,
+      customerId: c.id, payload: { customer: c, appts: myAppts, invoices: myInv, care: myCare },
+    });
+    if (!saved) return;
+    setData?.({
+      ...data,
+      customers: data.customers.filter((x) => x.id !== c.id),
+      appts: data.appts.filter((a) => a.customerId !== c.id),
+      invoices: invoices.filter((i) => i.customerId !== c.id),
+      care: care.filter((x) => x.customerId !== c.id),
+    });
     setSel(null);
     setFull(false);
   };
@@ -119,7 +141,7 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
         </span>
       </div>
       <div className="mt-2 text-2xl font-extrabold text-slate-900 font-heading">{value}</div>
-      {sub && <div className="text-[11px] text-slate-400 font-medium mt-1">{sub}</div>}
+      {sub && <div className="text-[11px] text-slate-500 font-medium mt-1">{sub}</div>}
     </div>
   );
 
@@ -143,7 +165,7 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
                 <h2 className="font-bold text-slate-900 text-base font-heading">Danh Sách Hồ Sơ Khách Hàng</h2>
                 <p className="text-xs text-slate-500">Tra cứu nhanh theo họ tên, số điện thoại, mã hồ sơ hoặc nguồn kênh</p>
               </div>
-              <button onClick={() => openAdd("customer")} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 transition">
+              <button onClick={() => openAdd("customer")} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-800 hover:to-teal-800 transition">
                 <UserPlus size={15} /> Thêm Khách Hàng
               </button>
             </div>
@@ -154,7 +176,7 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
                 {TABS.map((t) => (
                   <button key={t.key} onClick={() => setTab(t.key)}
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
-                      tab === t.key ? "bg-emerald-600 text-white shadow-xs" : "bg-slate-100 text-slate-600 hover:bg-slate-200/80"
+                      tab === t.key ? "bg-emerald-700 text-white shadow-xs" : "bg-slate-100 text-slate-600 hover:bg-slate-200/80"
                     }`}>
                     <t.icon size={14} /> {t.label}
                   </button>
@@ -163,10 +185,10 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <div className="relative flex-1 sm:w-56">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nhập tên, SĐT, mã KH..." className={inputCls + " pl-8 text-xs py-2"} />
                 </div>
-                <select value={source} onChange={(e) => setSource(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none">
+                <select aria-label="Lọc theo nguồn khách" value={source} onChange={(e) => setSource(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none">
                   <option value="all">Tất cả nguồn</option>
                   {sources.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
@@ -180,7 +202,7 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
               <span>Hiển thị {shown.length} / {list.length} kết quả</span>
               <div className="flex items-center gap-2">
                 <span>Trang:</span>
-                <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="rounded-lg border border-slate-200 px-2 py-1 bg-white focus:outline-none">
+                <select aria-label="Số khách mỗi trang" value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="rounded-lg border border-slate-200 px-2 py-1 bg-white focus:outline-none">
                   <option value={20}>20 khách/trang</option>
                   <option value={50}>50 khách/trang</option>
                   <option value={0}>Tất cả</option>
@@ -200,11 +222,11 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {shown.length === 0 ? (
-                  <tr><td colSpan={5} className="p-8 text-center text-slate-400">Không tìm thấy khách hàng phù hợp.</td></tr>
+                  <tr><td colSpan={5} className="p-8 text-center text-slate-500">Không tìm thấy khách hàng phù hợp.</td></tr>
                 ) : shown.map((c, idx) => (
                   <tr key={c.id} onClick={() => setSel(c.id)}
                     className={`table-row cursor-pointer ${sel === c.id ? "bg-emerald-50/70 font-medium" : ""}`}>
-                    <td className="p-3 text-center text-slate-400 font-semibold">{idx + 1}</td>
+                    <td className="p-3 text-center text-slate-500 font-semibold">{idx + 1}</td>
                     <td className="p-3">
                       <div className="flex items-center gap-2.5">
                         <Avatar src={c.avatar} name={c.name} size={34} />
@@ -212,7 +234,7 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
                           <button onClick={(e) => { e.stopPropagation(); onOpenCustomer?.(c.id); }} className="font-bold text-emerald-700 hover:underline block text-left">
                             {c.name}
                           </button>
-                          <span className="text-[10px] text-slate-400 font-mono">{c.code} · {c.gender || "Khách"}</span>
+                          <span className="text-[10px] text-slate-500 font-mono">{c.code} · {c.gender || "Khách"}</span>
                         </div>
                       </div>
                     </td>
@@ -220,12 +242,12 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
                     <td className="p-3 text-slate-500">{c.address || "Chưa cập nhật"} {c.source && <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-600 ml-1">{c.source}</span>}</td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={(e) => { e.stopPropagation(); onEdit?.(c); }} title="Sửa"
-                          className="w-7 h-7 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition grid place-items-center">
+                        <button aria-label={`Sửa khách hàng ${c.name}`} onClick={(e) => { e.stopPropagation(); onEdit?.(c); }} title="Sửa"
+                          className="w-7 h-7 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition grid place-items-center">
                           <Pencil size={14} />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); removeCustomer(c); }} title="Xoá"
-                          className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center">
+                        <button aria-label={`Xoá khách hàng ${c.name}`} onClick={(e) => { e.stopPropagation(); removeCustomer(c); }} title="Xoá"
+                          className="w-7 h-7 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center">
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -245,10 +267,10 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
                 <ChevronLeft size={16} /> Đóng
               </button>
               <div className="flex items-center gap-1">
-                <button onClick={() => onEdit?.(selCust)} title="Chỉnh sửa hồ sơ" className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50">
+                <button aria-label={`Chỉnh sửa hồ sơ ${selCust.name}`} onClick={() => onEdit?.(selCust)} title="Chỉnh sửa hồ sơ" className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50">
                   <Pencil size={15} />
                 </button>
-                <button onClick={() => removeCustomer(selCust)} title="Xóa" className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50">
+                <button aria-label={`Xoá khách hàng ${selCust.name}`} onClick={() => removeCustomer(selCust)} title="Xóa" className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50">
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -258,20 +280,20 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
             <div className="flex flex-col items-center text-center">
               <Avatar src={selCust.avatar} name={selCust.name} size={72} className="ring-4 ring-emerald-500/20 mb-2" />
               <h3 className="font-bold text-slate-900 text-base font-heading">{selCust.name}</h3>
-              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full mt-1 border border-emerald-200/60">
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full mt-1 border border-emerald-200/60">
                 {selCust.code}
               </span>
             </div>
 
             <div className="space-y-2 pt-2 border-t border-slate-100 text-slate-600">
-              <div className="flex justify-between"><span className="text-slate-400">Điện thoại:</span> <span className="font-semibold text-slate-800">{selCust.phone}</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">Giới tính / Tuổi:</span> <span className="font-semibold text-slate-800">{selCust.gender} · {ageFrom(selCust.dob)} tuổi</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">Doanh số:</span> <span className="font-extrabold text-emerald-700">{fmtVND(selBilled)}</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">Đã thu:</span> <span className="font-extrabold text-sky-700">{fmtVND(selPaid)}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Điện thoại:</span> <span className="font-semibold text-slate-800">{selCust.phone}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Giới tính / Tuổi:</span> <span className="font-semibold text-slate-800">{[selCust.gender, ageFrom(selCust.dob)].filter(Boolean).join(" · ") || "—"}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Doanh số:</span> <span className="font-extrabold text-emerald-700">{fmtVND(selBilled)}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Đã thu:</span> <span className="font-extrabold text-sky-700">{fmtVND(selPaid)}</span></div>
             </div>
 
             <button onClick={() => onOpenCustomer?.(selCust.id)}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 transition">
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 hover:from-emerald-800 hover:to-teal-800 transition">
               Xem Hồ Sơ Chi Tiết & Răng →
             </button>
           </aside>

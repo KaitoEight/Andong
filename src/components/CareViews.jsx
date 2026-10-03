@@ -32,7 +32,7 @@ function SectionHeader({ icon: Icon, title, count, color = "emerald" }) {
 
 function Empty({ msg = "Không có dữ liệu." }) {
   return (
-    <div className="card p-10 text-center text-slate-400 text-sm">
+    <div className="card p-10 text-center text-slate-500 text-sm">
       {msg}
     </div>
   );
@@ -93,14 +93,14 @@ function CareRemind({ data, setData }) {
                   <tr key={a.id} className="hover:bg-slate-50 transition">
                     <td className="px-4 py-3">
                       <div className="font-semibold text-slate-800">{fmtDate(a.date)}</div>
-                      <div className="text-xs text-slate-400">{a.time}</div>
+                      <div className="text-xs text-slate-500">{a.time}</div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <Avatar src={c?.avatar} name={c?.name} size={32} />
                         <div>
                           <div className="font-medium text-slate-800">{c?.name}</div>
-                          <div className="text-xs text-slate-400">{c?.code}</div>
+                          <div className="text-xs text-slate-500">{c?.code}</div>
                         </div>
                       </div>
                     </td>
@@ -109,7 +109,7 @@ function CareRemind({ data, setData }) {
                     <td className="px-4 py-3"><Badge status={a.status} /></td>
                     <td className="px-4 py-3 text-center">
                       {a.reminded ? (
-                        <span className="text-xs text-emerald-600 font-medium flex items-center justify-center gap-1">
+                        <span className="text-xs text-emerald-700 font-medium flex items-center justify-center gap-1">
                           <CheckCircle2 size={13} /> Đã nhắc
                         </span>
                       ) : (
@@ -169,14 +169,14 @@ function CareNoService({ data }) {
                   <tr key={a.id} className="hover:bg-slate-50 transition">
                     <td className="px-4 py-3">
                       <div className="font-semibold text-amber-700">{fmtDate(a.date)}</div>
-                      <div className="text-xs text-slate-400">{a.time}</div>
+                      <div className="text-xs text-slate-500">{a.time}</div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <Avatar src={c?.avatar} name={c?.name} size={32} />
                         <div>
                           <div className="font-medium text-slate-800">{c?.name}</div>
-                          <div className="text-xs text-slate-400">{c?.code}</div>
+                          <div className="text-xs text-slate-500">{c?.code}</div>
                         </div>
                       </div>
                     </td>
@@ -203,7 +203,7 @@ function CareBirthday({ data }) {
   const items = useMemo(() =>
     data.customers
       .filter((c) => {
-        if (!c.dob) return false;
+        if (!c.dob || c.dobYearOnly) return false; // chỉ biết năm sinh -> không có ngày sinh nhật thật
         const [, m] = c.dob.split("-");
         return parseInt(m, 10) === month;
       })
@@ -294,14 +294,14 @@ function CareNoShow({ data, setData }) {
                   <tr key={a.id} className="hover:bg-slate-50 transition">
                     <td className="px-4 py-3">
                       <div className="font-semibold text-slate-800">{fmtDate(a.date)}</div>
-                      <div className="text-xs text-slate-400">{a.time}</div>
+                      <div className="text-xs text-slate-500">{a.time}</div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <Avatar src={c?.avatar} name={c?.name} size={32} />
                         <div>
                           <div className="font-medium text-slate-800">{c?.name}</div>
-                          <div className="text-xs text-slate-400">{c?.code}</div>
+                          <div className="text-xs text-slate-500">{c?.code}</div>
                         </div>
                       </div>
                     </td>
@@ -353,16 +353,16 @@ function CareAfter({ data, setData, openAdd, registerAdd }) {
         <div className="space-y-2">
           {items.map((c) => (
             <div key={c.id} className="card p-4 flex items-start gap-3">
-              <button
+              <button aria-label={c.status === "Đã xử lý" ? "Đánh dấu chưa xử lý" : "Đánh dấu đã xử lý"}
                 onClick={() => toggle(c)}
-                className={`mt-0.5 transition ${c.status === "Đã xử lý" ? "text-emerald-600" : "text-slate-300 hover:text-emerald-400"}`}
+                className={`mt-0.5 transition ${c.status === "Đã xử lý" ? "text-emerald-700" : "text-slate-300 hover:text-emerald-400"}`}
               >
                 <CheckCircle2 size={20} />
               </button>
               <div className="flex-1">
                 <div className="text-sm font-medium text-slate-800">{cust(c.customerId)?.name} · {c.type}</div>
                 <div className="text-sm text-slate-600">{c.content}</div>
-                <div className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                   <CalendarClock size={12} /> Gọi lại: {fmtDate(c.callback)}
                 </div>
               </div>
@@ -409,16 +409,16 @@ function CareComplaint({ data, setData }) {
         <div className="space-y-2">
           {items.map((c) => (
             <div key={c.id} className={`bg-white rounded-xl border p-4 flex items-start gap-3 ${c.status !== "Đã xử lý" ? "border-rose-200" : "border-slate-100"}`}>
-              <button
+              <button aria-label={c.status === "Đã xử lý" ? "Đánh dấu chưa xử lý" : "Đánh dấu đã xử lý"}
                 onClick={() => toggle(c)}
-                className={`mt-0.5 transition ${c.status === "Đã xử lý" ? "text-emerald-600" : "text-rose-400 hover:text-emerald-400"}`}
+                className={`mt-0.5 transition ${c.status === "Đã xử lý" ? "text-emerald-700" : "text-rose-400 hover:text-emerald-400"}`}
               >
                 <CheckCircle2 size={20} />
               </button>
               <div className="flex-1">
                 <div className="text-sm font-medium text-slate-800">{cust(c.customerId)?.name} · {c.type}</div>
                 <div className="text-sm text-slate-600">{c.content}</div>
-                <div className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                   <CalendarClock size={12} /> Gọi lại: {fmtDate(c.callback)}
                 </div>
               </div>
@@ -480,14 +480,14 @@ function CareCancel({ data, setData }) {
                   <tr key={a.id} className="hover:bg-slate-50 transition opacity-80">
                     <td className="px-4 py-3">
                       <div className="font-semibold text-slate-700">{fmtDate(a.date)}</div>
-                      <div className="text-xs text-slate-400">{a.time}</div>
+                      <div className="text-xs text-slate-500">{a.time}</div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <Avatar src={c?.avatar} name={c?.name} size={32} />
                         <div>
                           <div className="font-medium text-slate-800">{c?.name}</div>
-                          <div className="text-xs text-slate-400">{c?.code}</div>
+                          <div className="text-xs text-slate-500">{c?.code}</div>
                         </div>
                       </div>
                     </td>

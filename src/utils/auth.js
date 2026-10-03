@@ -27,43 +27,17 @@ export function saveLocalUsers(users) {
 
 export async function login(username, password) {
   const normUser = (username || "").trim().toLowerCase();
-  const localUsers = loadLocalUsers();
-  const localUser = localUsers.find((u) => u.username.toLowerCase() === normUser);
 
-  // Gọi server API trước
+  // Máy chủ là nơi DUY NHẤT xác thực và quyết định vai trò. Không còn "đăng nhập giả" ngoại tuyến:
+  // phiên giả không có token hợp lệ nên app không tải được dữ liệu (kẹt ở màn hình tải), và nó cho phép
+  // vào bằng mật khẩu mặc định (123456 / admin123) dù mật khẩu thật đã đổi.
   const result = await apiFetch("/auth/login", { method: "POST", body: { username: normUser, password } });
   if (result.ok) {
-    // Nếu localUser đã được Admin cập nhật role mới hơn, luôn áp dụng role mới nhất
-    if (localUser && localUser.role && localUser.role !== result.user.role) {
-      result.user.role = localUser.role;
-      // Đồng bộ role mới lên server
-      apiFetch("/auth/update-user", { method: "POST", body: { username: normUser, role: localUser.role } }).catch(() => {});
-    }
     setToken(result.token);
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(result.user));
     return result;
   }
-
-  // Fallback Local Auth cho môi trường Offline / Client Standalone
-  if ((normUser === "admin@gmail.com" || normUser === "admin") && (password === "admin123" || password === "123456")) {
-    const role = localUser?.role || "Quản lý";
-    const adminUser = { id: "u_admin", fullName: localUser?.fullName || "Quản trị viên", username: normUser, role };
-    setToken("mock_admin_token");
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(adminUser));
-    return { ok: true, token: "mock_admin_token", user: adminUser };
-  }
-
-  if (localUser && (password === "123456" || password === "admin123" || localUser.password === password)) {
-    if (localUser.active === false) {
-      return { ok: false, error: "Tài khoản này đã bị khóa." };
-    }
-    const sessUser = { id: localUser.id, fullName: localUser.fullName, username: localUser.username, role: localUser.role };
-    setToken("mock_token_" + localUser.id);
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessUser));
-    return { ok: true, token: "mock_token_" + localUser.id, user: sessUser };
-  }
-
-  return { ok: false, error: "Tên đăng nhập hoặc mật khẩu không đúng." };
+  return { ok: false, error: result.error || "Tên đăng nhập hoặc mật khẩu không đúng." };
 }
 
 export async function register({ fullName, username, password, role }) {
@@ -73,20 +47,24 @@ export async function register({ fullName, username, password, role }) {
   if (users.some((u) => u.username.toLowerCase() === normUser)) {
     return { ok: false, error: "Tên đăng nhập / Email này đã tồn tại." };
   }
-  const newUser = { id: "u_" + Date.now(), fullName: fullName.trim(), username: normUser, role: role || "Quản lý", active: true, password };
-  saveLocalUsers([...users, newUser]);
+  // Chỉ Quản lý mới tạo được tài khoản (máy chủ kiểm tra). Chỉ lưu vào danh sách khi máy chủ đã tạo thật.
+  const res = await apiFetch("/auth/register", { method: "POST", body: { fullName, username: normUser, password, role } });
+  if (!res?.ok) return { ok: false, error: res?.error || "Máy chủ không tạo được tài khoản (chỉ Quản lý mới được tạo tài khoản)." };
 
-  try {
-    await apiFetch("/auth/register", { method: "POST", body: { fullName, username: normUser, password, role } });
-  } catch { /* ignore */ }
+  const newUser = { id: "u_" + Date.now(), fullName: fullName.trim(), username: normUser, role: role || "Quản lý", active: true };
+  saveLocalUsers([...users, newUser]);   // không lưu mật khẩu ở trình duyệt
 
   return { ok: true, user: newUser };
 }
 
 export async function updateUser({ id, username, fullName, role, password, active }) {
   const normUser = (username || "").trim().toLowerCase();
-  const users = loadLocalUsers();
 
+  // Máy chủ trước: chỉ khi máy chủ chấp nhận mới cập nhật danh sách hiển thị trên máy này
+  const res = await apiFetch("/auth/update-user", { method: "POST", body: { username: normUser, fullName, role, password, active } });
+  if (!res?.ok) return { ok: false, error: res?.error || "Máy chủ chưa cập nhật được tài khoản." };
+
+  const users = loadLocalUsers();
   const updatedUsers = users.map((u) => {
     if ((id && u.id === id) || u.username.toLowerCase() === normUser) {
       return {
@@ -94,7 +72,6 @@ export async function updateUser({ id, username, fullName, role, password, activ
         fullName: fullName !== undefined && fullName.trim() ? fullName.trim() : u.fullName,
         role: role !== undefined ? role : u.role,
         active: active !== undefined ? active : u.active,
-        ...(password ? { password } : {}),
       };
     }
     return u;
@@ -108,24 +85,14 @@ export async function updateUser({ id, username, fullName, role, password, activ
     const newSess = { ...curSess, fullName: fullName || curSess.fullName, role: role || curSess.role };
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(newSess));
   }
-
-  try {
-    await apiFetch("/auth/update-user", { method: "POST", body: { username: normUser, fullName, role, password } });
-  } catch { /* ignore */ }
-
   return { ok: true };
 }
 
 export async function deleteUser(username) {
   const normUser = (username || "").trim().toLowerCase();
-  const users = loadLocalUsers();
-  const updatedUsers = users.filter((u) => u.username.toLowerCase() !== normUser);
-  saveLocalUsers(updatedUsers);
-
-  try {
-    await apiFetch("/auth/delete-user", { method: "POST", body: { username: normUser } });
-  } catch { /* ignore */ }
-
+  const res = await apiFetch("/auth/delete-user", { method: "POST", body: { username: normUser } });
+  if (!res?.ok) return { ok: false, error: res?.error || "Máy chủ chưa xoá được tài khoản." };
+  saveLocalUsers(loadLocalUsers().filter((u) => u.username.toLowerCase() !== normUser));
   return { ok: true };
 }
 

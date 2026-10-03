@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Info, CircleUserRound, Camera, X } from "lucide-react";
 import { uid, todayStr } from "../utils/helpers";
+import useDialog from "../utils/useDialog";
 
 // Đọc file ảnh, thu nhỏ về tối đa `max` px rồi trả về data URL (nhẹ để lưu DB)
 function fileToDataUrl(file, max = 256) {
@@ -26,7 +27,7 @@ function fileToDataUrl(file, max = 256) {
 }
 
 const fieldCls =
-  "w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 " +
+  "w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-500 " +
   "focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition";
 const labelCls = "text-[13px] font-semibold text-slate-600 mb-1.5 block";
 
@@ -70,6 +71,7 @@ function initFrom(ed) {
 }
 
 export default function CustomerForm({ data, setData, onClose, editing, onCreateAppt }) {
+  const dialogRef = useDialog(onClose);
   const ed = editing || null;
   const [tab, setTab] = useState("main");
   const [f, setF] = useState(() => initFrom(ed));
@@ -109,6 +111,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
     if (!valid) return;
     const fields = {
       name: f.name.trim(), gender: f.gender, dob: f.dob, phone: f.phone.trim(),
+      dobYearOnly: !!(ed?.dobYearOnly && f.dob === ed.dob), // sửa ngày sinh => coi như đã biết ngày đầy đủ
       group: f.group || "Mới", email: f.email, source: f.source, sourceDetail: f.sourceDetail,
       nationality: f.nationality, occupation: f.occupation, address: f.address,
       province: f.province, ward: f.ward, oldCode: f.oldCode, language: f.language,
@@ -132,7 +135,8 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3 animate-fade" onClick={onClose}>
-      <div className="bg-slate-50 w-full max-w-5xl rounded-3xl shadow-2xl shadow-slate-900/20 ring-1 ring-slate-200/60 max-h-[94vh] flex flex-col animate-pop"
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Hồ sơ khách hàng" tabIndex={-1}
+        className="bg-slate-50 w-full max-w-5xl rounded-3xl shadow-2xl shadow-slate-900/20 ring-1 ring-slate-200/60 max-h-[94vh] flex flex-col animate-pop focus:outline-none"
         onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}
@@ -141,16 +145,16 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
             <div className="w-1 h-9 rounded-full bg-gradient-to-b from-emerald-500 to-teal-600" />
             <div>
               <h2 className="font-bold text-slate-900 leading-tight">Hồ sơ khách hàng</h2>
-              <p className="text-xs text-slate-400">{ed ? "Chỉnh sửa thông tin" : "Thông tin cá nhân"}</p>
+              <p className="text-xs text-slate-500">{ed ? "Chỉnh sửa thông tin" : "Thông tin cá nhân"}</p>
             </div>
           </div>
           <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
             <button onClick={() => setTab("main")}
-              className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition ${tab === "main" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+              className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition ${tab === "main" ? "bg-white text-slate-800 shadow-sm" : "text-slate-600 hover:text-slate-800"}`}>
               Thông tin chung
             </button>
             <button onClick={() => setTab("other")}
-              className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition ${tab === "other" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+              className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition ${tab === "other" ? "bg-white text-slate-800 shadow-sm" : "text-slate-600 hover:text-slate-800"}`}>
               Khác
             </button>
           </div>
@@ -210,7 +214,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                         <X size={12} /> Xoá ảnh
                       </button>
                     ) : (
-                      <span className="text-xs text-emerald-600 font-medium flex items-center gap-1"><Info size={12} /> Hướng dẫn</span>
+                      <span className="text-xs text-emerald-700 font-medium flex items-center gap-1"><Info size={12} /> Hướng dẫn</span>
                     )}
                   </div>
 
@@ -223,13 +227,13 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                       </div>
                       <div>
                         <label className={labelCls}>Ngày sinh</label>
-                        <input type="date" className={fieldCls} value={f.dob} onChange={(e) => set("dob", e.target.value)} />
+                        <input type="date" aria-label="Ngày sinh" className={fieldCls} value={f.dob} onChange={(e) => set("dob", e.target.value)} />
                       </div>
                       <div>
                         <label className={labelCls}>Số điện thoại <span className="text-rose-500">*</span></label>
                         <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-emerald-500/30 focus-within:border-emerald-500 transition">
                           <span className="text-base">🇻🇳</span>
-                          <input className="flex-1 min-w-0 text-sm focus:outline-none bg-transparent" value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="eg .số điện thoại" />
+                          <input type="tel" inputMode="tel" className="flex-1 min-w-0 text-sm focus:outline-none bg-transparent" value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="eg .số điện thoại" />
                         </div>
                       </div>
                     </div>
@@ -237,25 +241,25 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className={labelCls}>Chi nhánh</label>
-                        <select className={fieldCls} defaultValue="andong"><option value="andong">Nha Khoa Victoria</option></select>
+                        <select aria-label="Chi nhánh" className={fieldCls} defaultValue="andong"><option value="andong">Nha Khoa Victoria</option></select>
                       </div>
                       <div>
                         <label className={labelCls}>Nhóm khách hàng</label>
-                        <select className={fieldCls} value={f.group} onChange={(e) => set("group", e.target.value)}>
+                        <select aria-label="Nhóm khách hàng" className={fieldCls} value={f.group} onChange={(e) => set("group", e.target.value)}>
                           <option value="">nhóm khách hàng</option>
                           {GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
                         </select>
                       </div>
                       <div>
                         <label className={labelCls}>Email</label>
-                        <input className={fieldCls} value={f.email} onChange={(e) => set("email", e.target.value)} placeholder="eg .email" />
+                        <input type="email" inputMode="email" autoComplete="email" className={fieldCls} value={f.email} onChange={(e) => set("email", e.target.value)} placeholder="eg .email" />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                       <div>
                         <label className={labelCls}>Nguồn khách hàng</label>
-                        <select className={fieldCls} value={f.source} onChange={(e) => set("source", e.target.value)}>
+                        <select aria-label="Nguồn khách hàng" className={fieldCls} value={f.source} onChange={(e) => set("source", e.target.value)}>
                           {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </div>
@@ -265,7 +269,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                       </div>
                       <div>
                         <label className={labelCls}>Quốc tịch</label>
-                        <select className={fieldCls} value={f.nationality} onChange={(e) => set("nationality", e.target.value)}>
+                        <select aria-label="Quốc tịch" className={fieldCls} value={f.nationality} onChange={(e) => set("nationality", e.target.value)}>
                           {NATIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </div>
@@ -282,8 +286,9 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                       </div>
                       <div>
                         <label className={labelCls}>Tỉnh/Thành phố</label>
-                        <select className={fieldCls} value={f.province} onChange={(e) => set("province", e.target.value)}>
-                          {PROVINCES.map((s) => <option key={s} value={s}>{s}</option>)}
+                        <select aria-label="Tỉnh/Thành phố" className={fieldCls} value={f.province} onChange={(e) => set("province", e.target.value)}>
+                          <option value="">— Chọn —</option>
+                          {(f.province && !PROVINCES.includes(f.province) ? [...PROVINCES, f.province] : PROVINCES).map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </div>
                       <div>
@@ -299,7 +304,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className={labelCls}>Ngôn ngữ</label>
-                        <select className={fieldCls} value={f.language} onChange={(e) => set("language", e.target.value)}>
+                        <select aria-label="Ngôn ngữ" className={fieldCls} value={f.language} onChange={(e) => set("language", e.target.value)}>
                           {LANGUAGES.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </div>
@@ -316,7 +321,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
               {/* Card CMND/CC */}
               <div className="bg-white rounded-2xl border border-slate-200/70 p-5">
                 <h3 className="font-semibold text-slate-800 text-sm">CMND/CC</h3>
-                <p className="text-xs text-slate-400 mb-4">Thông tin CMND/CC</p>
+                <p className="text-xs text-slate-500 mb-4">Thông tin CMND/CC</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className={labelCls}>CMND/CC</label>
@@ -324,7 +329,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                   </div>
                   <div>
                     <label className={labelCls}>Ngày cấp</label>
-                    <input type="date" className={fieldCls} value={f.idDate} onChange={(e) => set("idDate", e.target.value)} />
+                    <input type="date" aria-label="Ngày cấp CMND/CC" className={fieldCls} value={f.idDate} onChange={(e) => set("idDate", e.target.value)} />
                   </div>
                   <div>
                     <label className={labelCls}>Nơi cấp</label>
@@ -338,7 +343,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
               {/* Y tế */}
               <div className="bg-white rounded-2xl border border-slate-200/70 p-5">
                 <h3 className="font-semibold text-slate-800 text-sm">Thông tin y tế</h3>
-                <p className="text-xs text-slate-400 mb-4">Tiền sử bệnh, dị ứng, người liên hệ</p>
+                <p className="text-xs text-slate-500 mb-4">Tiền sử bệnh, dị ứng, người liên hệ</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                   <div>
                     <label className={labelCls}>Tiền sử bệnh</label>
@@ -356,7 +361,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                   </div>
                   <div>
                     <label className={labelCls}>SĐT người giám hộ</label>
-                    <input className={fieldCls} value={f.guardianPhone} onChange={(e) => set("guardianPhone", e.target.value)} placeholder="Số điện thoại" />
+                    <input type="tel" inputMode="tel" className={fieldCls} value={f.guardianPhone} onChange={(e) => set("guardianPhone", e.target.value)} placeholder="Số điện thoại" />
                   </div>
                   <div>
                     <label className={labelCls}>Liên hệ khẩn cấp</label>
@@ -370,7 +375,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="font-semibold text-slate-800 text-sm">Ảnh X-quang / Tài liệu</h3>
-                    <p className="text-xs text-slate-400">{f.files.length} tệp đính kèm</p>
+                    <p className="text-xs text-slate-500">{f.files.length} tệp đính kèm</p>
                   </div>
                   <input ref={docRef} type="file" accept="image/*" multiple className="hidden" onChange={pickDocs} />
                   <button type="button" onClick={() => docRef.current?.click()}
@@ -379,7 +384,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                   </button>
                 </div>
                 {f.files.length === 0 ? (
-                  <div className="text-center text-sm text-slate-400 py-6 border border-dashed border-slate-200 rounded-xl">
+                  <div className="text-center text-sm text-slate-500 py-6 border border-dashed border-slate-200 rounded-xl">
                     Chưa có ảnh. Bấm "Thêm ảnh" để tải phim X-quang, ảnh trong miệng...
                   </div>
                 ) : (
@@ -387,11 +392,11 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                     {f.files.map((doc, i) => (
                       <div key={i} className="relative group">
                         <img src={doc.url} alt={doc.name} className="w-full h-24 object-cover rounded-lg border border-slate-200" />
-                        <button type="button" onClick={() => removeDoc(i)}
-                          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-rose-500 text-white grid place-items-center shadow opacity-0 group-hover:opacity-100 transition">
+                        <button aria-label="Xoá ảnh đính kèm" type="button" onClick={() => removeDoc(i)}
+                          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-rose-600 text-white grid place-items-center shadow opacity-0 group-hover:opacity-100 transition">
                           <X size={13} />
                         </button>
-                        <div className="text-[10px] text-slate-400 truncate mt-1">{doc.name}</div>
+                        <div className="text-[10px] text-slate-500 truncate mt-1">{doc.name}</div>
                       </div>
                     ))}
                   </div>
@@ -409,10 +414,10 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
           </label>
           <div className="flex items-center gap-2.5">
             <button onClick={onClose}
-              className="px-5 py-2 rounded-xl bg-slate-400 text-white text-sm font-medium hover:bg-slate-500 transition">Đóng</button>
+              className="px-5 py-2 rounded-xl bg-slate-600 text-white text-sm font-medium hover:bg-slate-700 transition">Đóng</button>
             <button onClick={save} disabled={!valid}
               className={`px-6 py-2 rounded-xl text-white text-sm font-semibold transition-all duration-200 ${
-                valid ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25 hover:-translate-y-0.5" : "bg-slate-300 cursor-not-allowed"
+                valid ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25 hover:-translate-y-0.5" : "bg-slate-200 text-slate-600 cursor-not-allowed"
               }`}>{ed ? "Cập nhật" : "Lưu"}</button>
           </div>
         </div>

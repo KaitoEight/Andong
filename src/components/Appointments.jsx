@@ -144,7 +144,7 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
         {sortKey ? (
           <button onClick={() => toggleSort(sortKey)} className="inline-flex items-center gap-1 hover:text-slate-900 transition">
             {label}
-            <Icon size={12} className={active ? "text-emerald-600 font-bold" : "text-slate-300"} />
+            <Icon size={12} className={active ? "text-emerald-700 font-bold" : "text-slate-300"} />
           </button>
         ) : label}
       </th>
@@ -157,17 +157,17 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
       <div className="card p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-            <button onClick={() => setDate(shiftDate(date, -1))} className="p-1.5 rounded-lg hover:bg-white text-slate-600 transition">
+            <button aria-label="Ngày trước" onClick={() => setDate(shiftDate(date, -1))} className="p-1.5 rounded-lg hover:bg-white text-slate-600 transition">
               <ChevronLeft size={18} />
             </button>
-            <button onClick={() => setDate(shiftDate(date, 1))} className="p-1.5 rounded-lg hover:bg-white text-slate-600 transition">
+            <button aria-label="Ngày sau" onClick={() => setDate(shiftDate(date, 1))} className="p-1.5 rounded-lg hover:bg-white text-slate-600 transition">
               <ChevronRight size={18} />
             </button>
           </div>
 
           <div>
             <div className="font-bold text-slate-900 text-sm font-heading">{allDatesMode ? "Tất Cả Lịch Hẹn Hệ Thống" : fmtDateVN(date)}</div>
-            {isToday && !allDatesMode && <span className="text-[10px] text-emerald-600 font-extrabold uppercase tracking-wider">Hôm nay</span>}
+            {isToday && !allDatesMode && <span className="text-[10px] text-emerald-700 font-extrabold uppercase tracking-wider">Hôm nay</span>}
           </div>
 
           {!isToday && !allDatesMode && (
@@ -181,7 +181,7 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
             onClick={() => setAllDatesMode((v) => !v)}
             className={`text-xs px-3 py-1 rounded-xl font-bold transition flex items-center gap-1.5 border ${
               allDatesMode
-                ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                ? "bg-emerald-700 text-white border-emerald-600 shadow-sm"
                 : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
             }`}
           >
@@ -192,15 +192,15 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
         {/* Counter Pills */}
         <div className="flex items-center gap-3 text-xs">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/60">
-            <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold grid place-items-center text-xs">{stats.total}</span>
+            <span className="w-6 h-6 rounded-lg bg-emerald-700 text-white font-bold grid place-items-center text-xs">{stats.total}</span>
             <span className="font-semibold text-slate-600">Tổng lịch</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/60">
-            <span className="w-6 h-6 rounded-lg bg-sky-600 text-white font-bold grid place-items-center text-xs">{stats.arrived}</span>
+            <span className="w-6 h-6 rounded-lg bg-sky-700 text-white font-bold grid place-items-center text-xs">{stats.arrived}</span>
             <span className="font-semibold text-slate-600">Đã đến</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/60">
-            <span className="w-6 h-6 rounded-lg bg-rose-500 text-white font-bold grid place-items-center text-xs">{stats.cancelled}</span>
+            <span className="w-6 h-6 rounded-lg bg-rose-600 text-white font-bold grid place-items-center text-xs">{stats.cancelled}</span>
             <span className="font-semibold text-slate-600">Đã hủy</span>
           </div>
         </div>
@@ -211,7 +211,7 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
         <div className="flex flex-wrap items-center gap-2">
           {/* Quick Search */}
           <div className="relative w-full sm:w-64">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               value={q} onChange={(e) => setQ(e.target.value)}
               placeholder="Lọc tên, SĐT, dịch vụ..."
@@ -234,7 +234,7 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
             return (
               <button key={i} onClick={() => setActiveSlot(active ? null : i)}
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
-                  active ? "bg-emerald-600 text-white border-emerald-600 shadow-sm" : "bg-slate-50 border-slate-200/80 text-slate-600 hover:bg-slate-100"
+                  active ? "bg-emerald-700 text-white border-emerald-600 shadow-sm" : "bg-slate-50 border-slate-200/80 text-slate-600 hover:bg-slate-100"
                 }`}>
                 <span className={`w-5 h-5 rounded-md text-[10px] font-bold grid place-items-center ${active ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"}`}>
                   {slotCounts[i]}
@@ -245,7 +245,7 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
           })}
         </div>
 
-        <button onClick={() => openAdd("appt")} className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 transition">
+        <button onClick={() => openAdd("appt")} className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-800 hover:to-teal-800 transition">
           <CalendarPlus size={15} /> Tạo Lịch Hẹn
         </button>
       </div>
@@ -268,7 +268,7 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
           <tbody className="divide-y divide-slate-100">
             {list.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-12 text-center text-slate-400 text-xs">
+                <td colSpan={8} className="p-12 text-center text-slate-500 text-xs">
                   Không tìm thấy lịch hẹn cho {allDatesMode ? "toàn bộ hệ thống" : isToday ? "hôm nay" : "ngày " + date}.
                 </td>
               </tr>
@@ -280,7 +280,7 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
                 return (
                   <tr key={a.id} onClick={() => onEdit?.(a)}
                     className="table-row cursor-pointer hover:bg-slate-50/80">
-                    <td className="p-3 text-center text-slate-400 font-bold">{idx + 1}</td>
+                    <td className="p-3 text-center text-slate-500 font-bold">{idx + 1}</td>
 
                     <td className="p-3">
                       <div className="font-bold text-slate-900 text-xs">{a.time} - {endTime(a.time, a.mins ?? s?.mins)}</div>
@@ -309,7 +309,7 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); onOpenCustomer?.(c.id); }}
-                            className="font-bold text-slate-800 hover:text-emerald-600 hover:underline text-left"
+                            className="font-bold text-slate-800 hover:text-emerald-700 hover:underline text-left"
                             title="Xem hồ sơ khách hàng"
                           >
                             {c.name || a.customerName}
@@ -336,8 +336,8 @@ export default function Appointments({ data, setData, openAdd, registerAdd, onEd
 
                     <td className="p-3 text-center">
                       {a.status !== "cancelled" && (
-                        <button onClick={(e) => { e.stopPropagation(); cancel(a); }} title="Hủy lịch hẹn này"
-                          className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center">
+                        <button aria-label={`Huỷ lịch hẹn của ${c?.name || a.customerName || "khách"}`} onClick={(e) => { e.stopPropagation(); cancel(a); }} title="Hủy lịch hẹn này"
+                          className="w-7 h-7 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center">
                           <X size={15} />
                         </button>
                       )}

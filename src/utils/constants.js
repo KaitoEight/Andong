@@ -7,9 +7,9 @@ export const STATUS = {
   pending:   { label: "Chờ xác nhận", cls: "bg-amber-50 text-amber-700 border-amber-200" },
   confirmed: { label: "Đã xác nhận",  cls: "bg-sky-50 text-sky-700 border-sky-200" },
   arrived:   { label: "Đã đến",       cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  done:      { label: "Hoàn thành",   cls: "bg-emerald-600 text-white border-emerald-600" },
+  done:      { label: "Hoàn thành",   cls: "bg-emerald-700 text-white border-emerald-700" },
   cancelled: { label: "Đã hủy",       cls: "bg-rose-50 text-rose-700 border-rose-200" },
-  noshow:    { label: "Không đến",    cls: "bg-slate-100 text-slate-500 border-slate-200" },
+  noshow:    { label: "Không đến",    cls: "bg-slate-100 text-slate-600 border-slate-200" },
 };
 
 export const STATUS_CYCLE = ["pending", "confirmed", "arrived", "done", "noshow", "cancelled"];
@@ -105,6 +105,7 @@ export const NAV = [
       { key: "cfg-category", label: "Danh Mục",        addable: false },
       { key: "cfg-print",    label: "Cấu Hình Mẫu In", addable: false },
       { key: "cfg-log",      label: "Lịch Sử",         addable: false },
+      { key: "cfg-trash",    label: "Dữ Liệu Đã Xoá",  addable: false, adminOnly: true },
     ],
   },
   {
@@ -165,6 +166,7 @@ export const VIEW_PATHS = {
   "cfg-category":   "/config/category/",
   "cfg-print":      "/config/printtemplate/",
   "cfg-log":        "/config/log/",
+  "cfg-trash":      "/config/trash/",
   reports:          "/report/listreport/",
 };
 

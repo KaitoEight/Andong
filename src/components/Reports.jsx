@@ -31,9 +31,9 @@ export default function Reports({ data }) {
   return (
     <div className="grid md:grid-cols-2 gap-4">
       <div className="card p-5">
-        <h3 className="font-semibold text-slate-800 mb-4 text-sm">Lịch hẹn theo trạng thái</h3>
+        <h2 className="font-semibold text-slate-800 mb-4 text-sm">Lịch hẹn theo trạng thái</h2>
         {byStatus.length === 0 ? (
-          <p className="text-sm text-slate-400">Chưa có dữ liệu.</p>
+          <p className="text-sm text-slate-500">Chưa có dữ liệu.</p>
         ) : (
           <ul className="space-y-2">
             {byStatus.map((r, i) => (
@@ -48,9 +48,9 @@ export default function Reports({ data }) {
       </div>
 
       <div className="card p-5">
-        <h3 className="font-semibold text-slate-800 mb-2 text-sm">Doanh thu theo dịch vụ (hoàn thành)</h3>
+        <h2 className="font-semibold text-slate-800 mb-2 text-sm">Doanh thu theo dịch vụ (hoàn thành)</h2>
         {byService.length === 0 ? (
-          <p className="text-sm text-slate-400">Chưa có dịch vụ nào hoàn thành.</p>
+          <p className="text-sm text-slate-500">Chưa có dịch vụ nào hoàn thành.</p>
         ) : (
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={byService} layout="vertical" margin={{ left: 10, right: 10 }}>

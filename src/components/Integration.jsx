@@ -61,7 +61,7 @@ function IntSms() {
                 <td className="px-4 py-3 text-slate-500 text-xs">{fmtDate(m.date)}</td>
                 <td className="px-4 py-3 text-center">
                   {m.status === "sent" ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                    <span className="inline-flex items-center gap-1 text-xs text-emerald-700 font-medium">
                       <CheckCircle2 size={13} /> Đã gửi
                     </span>
                   ) : (
@@ -124,7 +124,7 @@ function IntCall() {
                 <td className="px-4 py-3 text-slate-500 text-xs">{fmtDate(c.date)}</td>
                 <td className="px-4 py-3 text-center">
                   {c.status === "answered" ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                    <span className="inline-flex items-center gap-1 text-xs text-emerald-700 font-medium">
                       <PhoneCall size={12} /> Trả lời
                     </span>
                   ) : (

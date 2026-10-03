@@ -3,6 +3,7 @@ import {
   Plus, Trash2, Printer, ChevronDown, Filter, Info, CalendarCheck, RotateCw, Send, Check, Pencil
 } from "lucide-react";
 import { uid, todayStr, fmtDate } from "../utils/helpers";
+import { confirmAndArchive } from "../utils/trash";
 
 const inp = "w-full px-3 py-2 rounded border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500";
 const lbl = "text-[13px] font-medium text-slate-600 mb-1 block";
@@ -102,8 +103,15 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
     setQuick("");
   };
 
-  const remove = (id) => {
-    if (!window.confirm("Xoá phiên điều trị này?")) return;
+  const remove = async (id) => {
+    const rec = treatments.find((r) => r.id === id);
+    if (!rec) return;
+    const saved = await confirmAndArchive("Xoá phiên điều trị này?", {
+      type: "treatment", label: rec.serviceName || rec.content || "Phiên điều trị",
+      summary: `${customer.name} · ${fmtDate(rec.date)} · ${rec.completion || 0}%`,
+      customerId: customer.id, payload: { customerId: customer.id, record: rec },
+    });
+    if (!saved) return;
     setData({ ...data, customers: data.customers.map((x) => x.id === customer.id ? { ...x, treatments: (x.treatments || []).filter((r) => r.id !== id) } : x) });
   };
 
@@ -112,7 +120,7 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
     <div className="flex flex-col lg:flex-row items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
       <div className="flex-1" />
       <div className="flex flex-col items-center">
-        <div className="text-sm"><span className="text-slate-400">-</span> <span className="font-medium text-emerald-600">{latest?.time || "--:--"}</span></div>
+        <div className="text-sm"><span className="text-slate-500">-</span> <span className="font-medium text-emerald-700">{latest?.time || "--:--"}</span></div>
         <div className="flex items-center gap-1 mt-1">
           <span className="w-3 h-3 rounded-full bg-emerald-500" />
           <span className="w-12 h-0.5 bg-slate-200" />
@@ -121,15 +129,15 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
         <div className="flex gap-8 text-xs text-slate-500 mt-1"><span>Chưa Đến</span><span>Đã Đến</span></div>
         <div className="flex items-center gap-2 mt-2">
           <span className="text-slate-500 text-sm font-medium">#{appts.length || 0}</span>
-          <button onClick={() => { setMode("list"); setEditId(null); }} className="px-3 py-1 rounded bg-slate-400 text-white text-xs font-medium hover:bg-slate-500">Quay lại</button>
-          <button onClick={cycleStatus} disabled={!latest} className={`px-3 py-1 rounded text-white text-xs font-medium ${latest ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-300"}`}>Chuyển trạng thái</button>
+          <button onClick={() => { setMode("list"); setEditId(null); }} className="px-3 py-1 rounded bg-slate-600 text-white text-xs font-medium hover:bg-slate-700">Quay lại</button>
+          <button onClick={cycleStatus} disabled={!latest} className={`px-3 py-1 rounded text-white text-xs font-medium ${latest ? "bg-emerald-700 hover:bg-emerald-800" : "bg-slate-300"}`}>Chuyển trạng thái</button>
         </div>
       </div>
       <div className="flex-1 flex justify-end w-full lg:w-auto">
         <div className="flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 w-full lg:w-72 bg-slate-50">
           <input value={quick} onChange={(e) => setQuick(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") quickAdd(); }}
             placeholder="eg .nội dung" className="flex-1 bg-transparent text-sm focus:outline-none" />
-          <button onClick={quickAdd} className="text-emerald-600 hover:text-emerald-700"><Send size={16} /></button>
+          <button aria-label="Thêm nội dung điều trị nhanh" onClick={quickAdd} className="text-emerald-700 hover:text-emerald-800"><Send size={16} /></button>
         </div>
       </div>
     </div>
@@ -140,7 +148,7 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
     return (
       <div>
         {StatusBar}
-        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-emerald-500 text-emerald-600 text-sm font-medium bg-white mb-4">
+        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-emerald-500 text-emerald-700 text-sm font-medium bg-white mb-4">
           <CalendarCheck size={15} /> {mode === "edit" ? "Cập Nhật Phiên Điều Trị" : "Điều Trị Mới"}
         </button>
 
@@ -159,7 +167,7 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
             </div>
 
             <div><label className={lbl}>Dịch vụ điều trị</label>
-              <select className={inp} value={form.serviceId} onChange={(e) => { const s = custServices.find((x) => x.id === e.target.value) || data.services.find((x) => x.id === e.target.value); set("serviceId", e.target.value); set("serviceName", s?.name || ""); }}>
+              <select aria-label="Dịch vụ điều trị" className={inp} value={form.serviceId} onChange={(e) => { const s = custServices.find((x) => x.id === e.target.value) || data.services.find((x) => x.id === e.target.value); set("serviceId", e.target.value); set("serviceName", s?.name || ""); }}>
                 <option value="">-- chọn dịch vụ --</option>
                 {custServices.length > 0 && <optgroup label="Dịch vụ đã chốt">{custServices.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>}
                 <optgroup label="Tất cả dịch vụ">{data.services.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>
@@ -180,7 +188,7 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
                   {[...treatments].reverse().slice(0, 6).map((r) => (
                     <li key={r.id} className="flex items-start gap-2 text-xs">
                       <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
-                      <div><div className="text-slate-400">{r.time} {fmtDate(r.date)}</div><div className="font-medium text-slate-700">{r.serviceName || r.content}</div></div>
+                      <div><div className="text-slate-500">{r.time} {fmtDate(r.date)}</div><div className="font-medium text-slate-700">{r.serviceName || r.content}</div></div>
                     </li>
                   ))}
                 </ul>
@@ -192,15 +200,15 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
           <div className="bg-white p-4 rounded shadow-sm border border-slate-100 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className={lbl}>Bác sĩ</label>
-                <select className={inp} value={form.doctor} onChange={(e) => set("doctor", e.target.value)}>
+                <select aria-label="Bác sĩ" className={inp} value={form.doctor} onChange={(e) => set("doctor", e.target.value)}>
                   <option value="">-- chọn --</option>{doctors.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
                 </select></div>
               <div><label className={lbl}>PT/KTV</label>
-                <select className={inp} value={form.tech} onChange={(e) => set("tech", e.target.value)}>
+                <select aria-label="PT/KTV" className={inp} value={form.tech} onChange={(e) => set("tech", e.target.value)}>
                   <option value="">-- chọn --</option>{techs.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
                 </select></div>
               <div><label className={lbl}>Hỗ trợ chuyên môn</label>
-                <select className={inp} value={form.support} onChange={(e) => set("support", e.target.value)}>
+                <select aria-label="Hỗ trợ chuyên môn" className={inp} value={form.support} onChange={(e) => set("support", e.target.value)}>
                   <option value="">-- chọn --</option>{staff.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
                 </select></div>
               <div><label className={lbl}>Ngày điều trị kế tiếp</label>
@@ -214,9 +222,9 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
-          <button onClick={() => { setMode("list"); setEditId(null); setForm(blank); }} className="px-5 py-2 rounded bg-slate-400 text-white text-sm font-medium hover:bg-slate-500">Đóng</button>
-          {mode === "add" && <button onClick={() => save(true)} className="px-5 py-2 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">Lưu và tiếp tục</button>}
-          <button onClick={() => save(false)} className="px-5 py-2 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">{mode === "edit" ? "Cập Nhật Phiên Điều Trị" : "Lưu"}</button>
+          <button onClick={() => { setMode("list"); setEditId(null); setForm(blank); }} className="px-5 py-2 rounded bg-slate-600 text-white text-sm font-medium hover:bg-slate-700">Đóng</button>
+          {mode === "add" && <button onClick={() => save(true)} className="px-5 py-2 rounded bg-emerald-700 text-white text-sm font-medium hover:bg-emerald-800">Lưu và tiếp tục</button>}
+          <button onClick={() => save(false)} className="px-5 py-2 rounded bg-emerald-700 text-white text-sm font-medium hover:bg-emerald-800">{mode === "edit" ? "Cập Nhật Phiên Điều Trị" : "Lưu"}</button>
         </div>
       </div>
     );
@@ -263,19 +271,19 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
       {StatusBar}
       <div className="bg-white rounded shadow-sm border border-slate-100">
         <div className="flex items-center justify-between p-3 border-b border-slate-100">
-          <div className="flex items-center gap-3 text-slate-400"><Filter size={16} /><Info size={16} /></div>
+          <div className="flex items-center gap-3 text-slate-500"><Filter size={16} /><Info size={16} /></div>
           <div className="flex items-center gap-2">
             {custServices.length > 0 && (
-              <button onClick={syncServicesToTreatment} className="px-3 py-1.5 rounded bg-sky-600 text-white text-xs font-medium hover:bg-sky-700 flex items-center gap-1.5" title="Tự động đồng bộ các dịch vụ đã chốt sang tab Điều trị">
+              <button onClick={syncServicesToTreatment} className="px-3 py-1.5 rounded bg-sky-700 text-white text-xs font-medium hover:bg-sky-800 flex items-center gap-1.5" title="Tự động đồng bộ các dịch vụ đã chốt sang tab Điều trị">
                 <RotateCw size={13} /> Nạp Dịch Vụ Đã Chốt ({custServices.length})
               </button>
             )}
-            <button onClick={() => { setForm(blank); setEditId(null); setMode("add"); }} className="px-3 py-1.5 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 flex items-center gap-1.5"><Plus size={14} /> Điều trị</button>
+            <button onClick={() => { setForm(blank); setEditId(null); setMode("add"); }} className="px-3 py-1.5 rounded bg-emerald-700 text-white text-sm font-medium hover:bg-emerald-800 flex items-center gap-1.5"><Plus size={14} /> Điều trị</button>
             <button className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm font-medium flex items-center gap-1 hover:bg-slate-800"><Printer size={13} /> In <ChevronDown size={12} /></button>
           </div>
         </div>
 
-        <div className="overflow-x-auto scroll-soft text-xs">
+        <div className="overflow-x-auto scroll-soft text-xs" tabIndex={0} role="region" aria-label="Bảng nhật ký điều trị">
           <table className="w-full min-w-[720px] text-left">
             <thead>
               <tr className="bg-slate-50 text-slate-500 uppercase font-semibold">
@@ -291,13 +299,13 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
             </thead>
             <tbody>
               {treatments.length === 0 ? (
-                <tr><td colSpan={8} className="p-8 text-center text-slate-400">Chưa có điều trị. Bấm "Điều trị".</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-slate-500">Chưa có điều trị. Bấm "Điều trị".</td></tr>
               ) : [...treatments].reverse().map((r, i) => (
                 <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
                   <td className="p-2 border-r border-slate-50 text-center text-slate-500">{i + 1}</td>
                   <td className="p-2 border-r border-slate-50 text-slate-600">{fmtDate(r.date)}</td>
                   <td className="p-2 border-r border-slate-50">
-                    <div className="font-medium text-emerald-600">{r.serviceName || r.content}</div>
+                    <div className="font-medium text-emerald-700">{r.serviceName || r.content}</div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-slate-500">Hoàn thành: <b className="text-slate-700">{r.completion || 0}%</b></span>
                       <div className="h-1.5 w-20 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, r.completion || 0)}%` }} /></div>
@@ -309,8 +317,8 @@ export default function CustomerTreatmentTab({ data, setData, customer }) {
                   <td className="p-2 border-r border-slate-50 text-center text-slate-500">{r.nextDate ? <span title={"Kế tiếp: " + fmtDate(r.nextDate)}><CalendarCheck size={15} className="inline text-slate-600" /></span> : ""}</td>
                   <td className="p-2 text-center">
                     <div className="flex items-center justify-center gap-1.5">
-                      <button onClick={() => startEdit(r)} title="Sửa phiên điều trị" className="text-slate-400 hover:text-amber-600"><Pencil size={14} /></button>
-                      <button onClick={() => remove(r.id)} title="Xóa phiên điều trị" className="text-slate-400 hover:text-rose-500"><Trash2 size={14} /></button>
+                      <button aria-label={`Sửa phiên điều trị ${r.serviceName || r.content || ""}`} onClick={() => startEdit(r)} title="Sửa phiên điều trị" className="text-slate-500 hover:text-amber-600"><Pencil size={14} /></button>
+                      <button aria-label={`Xoá phiên điều trị ${r.serviceName || r.content || ""}`} onClick={() => remove(r.id)} title="Xóa phiên điều trị" className="text-slate-500 hover:text-rose-500"><Trash2 size={14} /></button>
                     </div>
                   </td>
                 </tr>

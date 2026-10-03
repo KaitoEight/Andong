@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { uid, todayStr, fmtDate } from "../utils/helpers";
+import { confirmAndArchive } from "../utils/trash";
 
 const inp = "w-full px-3 py-2 rounded border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500";
 
@@ -22,8 +23,16 @@ export default function CustomerRecordTab({ data, setData, customer, field, titl
     setData({ ...data, customers: data.customers.map((x) => x.id === customer.id ? { ...x, [field]: [...(x[field] || []), rec] } : x) });
     setForm(blank); setAdding(false);
   };
-  const remove = (id) => {
-    if (!window.confirm("Xoá mục này?")) return;
+  const remove = async (id) => {
+    const rec = records.find((r) => r.id === id);
+    if (!rec) return;
+    const text = columns.map((c) => rec[c.key]).filter(Boolean).join(" — ");
+    const saved = await confirmAndArchive("Xoá mục này?", {
+      type: "record", label: `${title}: ${text.slice(0, 60) || "(trống)"}`,
+      summary: `${customer.name} · ${fmtDate(rec.date)}`,
+      customerId: customer.id, payload: { customerId: customer.id, field, record: rec },
+    });
+    if (!saved) return;
     setData({ ...data, customers: data.customers.map((x) => x.id === customer.id ? { ...x, [field]: (x[field] || []).filter((r) => r.id !== id) } : x) });
   };
 
@@ -31,9 +40,9 @@ export default function CustomerRecordTab({ data, setData, customer, field, titl
     if (col.type === "textarea")
       return <textarea rows={2} className={inp + " resize-none"} value={form[col.key]} onChange={(e) => set(col.key, e.target.value)} placeholder={col.label} />;
     if (col.type === "staff")
-      return <select className={inp} value={form[col.key]} onChange={(e) => set(col.key, e.target.value)}><option value="">-- chọn --</option>{staff.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}</select>;
+      return <select aria-label={col.label} className={inp} value={form[col.key]} onChange={(e) => set(col.key, e.target.value)}><option value="">-- chọn --</option>{staff.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}</select>;
     if (col.type === "select")
-      return <select className={inp} value={form[col.key]} onChange={(e) => set(col.key, e.target.value)}>{col.options.map((o) => <option key={o}>{o}</option>)}</select>;
+      return <select aria-label={col.label} className={inp} value={form[col.key]} onChange={(e) => set(col.key, e.target.value)}>{col.options.map((o) => <option key={o}>{o}</option>)}</select>;
     return <input className={inp} value={form[col.key]} onChange={(e) => set(col.key, e.target.value)} placeholder={col.label} />;
   };
 
@@ -47,9 +56,9 @@ export default function CustomerRecordTab({ data, setData, customer, field, titl
       <div className="flex justify-between items-center p-3 border-b border-slate-100">
         <div>
           <h3 className="font-bold text-slate-700">{title}</h3>
-          {subtitle && <p className="text-xs text-slate-400">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
         </div>
-        <button onClick={() => setAdding((a) => !a)} className="px-3 py-1.5 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 flex items-center gap-1.5"><Plus size={14} /> Thêm</button>
+        <button onClick={() => setAdding((a) => !a)} className="px-3 py-1.5 rounded bg-emerald-700 text-white text-sm font-medium hover:bg-emerald-800 flex items-center gap-1.5"><Plus size={14} /> Thêm</button>
       </div>
 
       {adding && (
@@ -62,28 +71,28 @@ export default function CustomerRecordTab({ data, setData, customer, field, titl
           ))}
           <div className="flex gap-2 justify-end">
             <button onClick={() => { setAdding(false); setForm(blank); }} className="px-4 py-1.5 rounded text-slate-600 hover:bg-slate-100 text-sm">Hủy</button>
-            <button onClick={save} className={"px-4 py-1.5 rounded bg-emerald-600 text-white text-sm font-medium " + (valid ? "" : "opacity-50 pointer-events-none")}>Lưu</button>
+            <button onClick={save} disabled={!valid} className={"px-4 py-1.5 rounded bg-emerald-700 text-white text-sm font-medium " + (valid ? "" : "opacity-50 cursor-not-allowed")}>Lưu</button>
           </div>
         </div>
       )}
 
       {records.length === 0 ? (
-        <div className="p-8 text-center text-slate-400 text-sm">Chưa có dữ liệu.</div>
+        <div className="p-8 text-center text-slate-500 text-sm">Chưa có dữ liệu.</div>
       ) : (
         <ul className="divide-y divide-slate-50">
           {[...records].reverse().map((r) => (
             <li key={r.id} className="p-3 flex items-start gap-3 text-sm hover:bg-slate-50">
-              <div className="text-xs text-slate-400 w-24 shrink-0">{r.time} {fmtDate(r.date)}</div>
+              <div className="text-xs text-slate-500 w-24 shrink-0">{r.time} {fmtDate(r.date)}</div>
               <div className="flex-1 min-w-0 space-y-0.5">
                 {columns.map((col) => r[col.key] ? (
                   col.type === "select" ? (
                     <span key={col.key} className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusCls(r[col.key])}`}>{r[col.key]}</span>
                   ) : (
-                    <div key={col.key} className="text-slate-700"><span className="text-slate-400 text-xs">{col.label}: </span>{r[col.key]}</div>
+                    <div key={col.key} className="text-slate-700"><span className="text-slate-500 text-xs">{col.label}: </span>{r[col.key]}</div>
                   )
                 ) : null)}
               </div>
-              <button onClick={() => remove(r.id)} className="text-slate-400 hover:text-rose-500 shrink-0"><Trash2 size={14} /></button>
+              <button aria-label="Xoá mục này" onClick={() => remove(r.id)} className="text-slate-500 hover:text-rose-500 shrink-0"><Trash2 size={14} /></button>
             </li>
           ))}
         </ul>

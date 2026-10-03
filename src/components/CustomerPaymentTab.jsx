@@ -6,6 +6,7 @@ import {
 import Modal from "./ui/Modal";
 import Field, { inputCls, btnPrimary } from "./ui/Field";
 import { uid, todayStr, fmtDate, fmtVND } from "../utils/helpers";
+import { confirmAndArchive } from "../utils/trash";
 
 export default function CustomerPaymentTab({ data, setData, customer }) {
   const [modal, setModal]           = useState(false);
@@ -92,8 +93,12 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
     setEditModal(null);
   };
 
-  const handleDeletePayment = (inv) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa đợt thanh toán ${inv.code} - ${fmtVND(inv.paid)}?`)) return;
+  const handleDeletePayment = async (inv) => {
+    const saved = await confirmAndArchive(
+      `Bạn có chắc chắn muốn xóa đợt thanh toán ${inv.code} - ${fmtVND(inv.paid)}?`,
+      { type: "invoice", label: inv.code, summary: `${customer.name} · thu ${fmtVND(inv.paid)} · ${inv.method || "Tiền mặt"}`, customerId: customer.id, payload: { invoice: inv } },
+    );
+    if (!saved) return;
     const updatedInvoices = (data.invoices || []).filter((i) => i.id !== inv.id);
     setData({ ...data, invoices: updatedInvoices });
   };
@@ -119,7 +124,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
             {totalDebt > 0 ? "Còn Nợ Cần Thu" : "Tình Trạng Nợ"}
           </div>
           <div className="mt-2 text-2xl font-extrabold font-heading">{fmtVND(totalDebt)}</div>
-          <div className={`text-[11px] mt-1 ${totalDebt > 0 ? "text-rose-100" : "text-slate-400"}`}>
+          <div className={`text-[11px] mt-1 ${totalDebt > 0 ? "text-rose-100" : "text-slate-500"}`}>
             {totalDebt > 0 ? "Cần thu thêm đợt tới" : "Đã hoàn thành nghĩa vụ"}
           </div>
         </div>
@@ -128,7 +133,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
       {/* Action Toolbar */}
       <div className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="font-bold text-slate-900 text-base font-heading">Lịch Sử & Phiếu Thu Thanh Toán</h3>
+          <h2 className="font-bold text-slate-900 text-base font-heading">Lịch Sử & Phiếu Thu Thanh Toán</h2>
           <p className="text-xs text-slate-500">Quản lý các đợt thu tiền, in phiếu thu, sửa và xoá đợt thanh toán</p>
         </div>
 
@@ -141,7 +146,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
           )}
 
           <button onClick={() => setModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 transition">
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 hover:from-emerald-800 hover:to-teal-800 transition">
             <Plus size={15} /> Tạo Phiếu Thu Mới
           </button>
         </div>
@@ -164,41 +169,41 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
           <tbody className="divide-y divide-slate-100">
             {invoices.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-12 text-center text-slate-400">
+                <td colSpan={7} className="p-12 text-center text-slate-500">
                   Khách hàng chưa có đợt thanh toán nào. Nhấn "Tạo Phiếu Thu Mới" để ghi nhận thu tiền.
                 </td>
               </tr>
             ) : (
               invoices.map((inv, idx) => (
                 <tr key={inv.id} className="table-row">
-                  <td className="p-3 text-center text-slate-400 font-bold">{idx + 1}</td>
+                  <td className="p-3 text-center text-slate-500 font-bold">{idx + 1}</td>
                   <td className="p-3">
                     <span className="font-mono text-emerald-700 font-bold text-xs">{inv.code}</span>
-                    {inv.note && <div className="text-[10px] text-slate-400 truncate">{inv.note}</div>}
+                    {inv.note && <div className="text-[10px] text-slate-500 truncate">{inv.note}</div>}
                   </td>
                   <td className="p-3 font-semibold text-slate-700">{fmtDate(inv.date)} {inv.time || ""}</td>
                   <td className="p-3">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                      <CreditCard size={13} className="text-emerald-600" />
+                      <CreditCard size={13} className="text-emerald-700" />
                       {inv.method || "Tiền mặt"}
                     </span>
                   </td>
-                  <td className="p-3 text-right font-extrabold text-emerald-600 text-sm">
+                  <td className="p-3 text-right font-extrabold text-emerald-700 text-sm">
                     {fmtVND(inv.paid)}
                   </td>
                   <td className="p-3 font-medium text-slate-600">{inv.staff || "Lễ tân"}</td>
                   <td className="p-3 text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => setPrintModal({ invoice: inv })} title="In phiếu thu"
+                      <button aria-label={`In phiếu thu ${inv.code}`} onClick={() => setPrintModal({ invoice: inv })} title="In phiếu thu"
                         className="w-7 h-7 rounded-lg text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition grid place-items-center">
                         <Printer size={15} />
                       </button>
-                      <button onClick={() => setEditModal({ invoice: inv, amount: String(inv.paid), method: inv.method || "Tiền mặt", staff: inv.staff || "Lễ tân", note: inv.note || "" })} title="Chỉnh sửa phiếu thu"
-                        className="w-7 h-7 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition grid place-items-center">
+                      <button aria-label={`Sửa phiếu thu ${inv.code}`} onClick={() => setEditModal({ invoice: inv, amount: String(inv.paid), method: inv.method || "Tiền mặt", staff: inv.staff || "Lễ tân", note: inv.note || "" })} title="Chỉnh sửa phiếu thu"
+                        className="w-7 h-7 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition grid place-items-center">
                         <Pencil size={15} />
                       </button>
-                      <button onClick={() => handleDeletePayment(inv)} title="Xoá đợt thanh toán này"
-                        className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center">
+                      <button aria-label={`Xoá phiếu thu ${inv.code}`} onClick={() => handleDeletePayment(inv)} title="Xoá đợt thanh toán này"
+                        className="w-7 h-7 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition grid place-items-center">
                         <Trash2 size={15} />
                       </button>
                     </div>
@@ -311,9 +316,9 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
                 <p className="text-[11px] text-slate-500">Hotline: 1900 1234 - 0988 999 888</p>
               </div>
               <div className="text-right">
-                <h3 className="font-bold text-emerald-700 text-sm">PHIẾU THU TIỀN</h3>
+                <h2 className="font-bold text-emerald-700 text-sm">PHIẾU THU TIỀN</h2>
                 <p className="font-mono text-slate-600">{printModal.invoice.code}</p>
-                <p className="text-slate-400">{fmtDate(printModal.invoice.date)}</p>
+                <p className="text-slate-500">{fmtDate(printModal.invoice.date)}</p>
               </div>
             </div>
 
@@ -326,7 +331,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
 
             <div className="border-t pt-3 flex justify-between font-bold text-sm text-slate-900">
               <span>SỐ TIỀN THỰC THU:</span>
-              <span className="text-emerald-600">{fmtVND(printModal.invoice.paid)}</span>
+              <span className="text-emerald-700">{fmtVND(printModal.invoice.paid)}</span>
             </div>
 
             <div className="grid grid-cols-2 text-center pt-6 text-[11px] text-slate-500">

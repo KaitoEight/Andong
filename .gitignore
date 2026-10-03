@@ -10,3 +10,9 @@ server/.env
 # Node portable đã kẹp cho Win7 và các gói zip — không cần khi host web
 /node/
 *.zip
+*.xlsx
+data/backup/
+
+# Ảnh chụp mật khẩu / trang lưu từ phần mềm cũ — KHÔNG đưa lên GitHub
+passMongo.png
+custommayinraw.html

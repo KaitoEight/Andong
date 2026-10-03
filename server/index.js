@@ -13,6 +13,7 @@ app.use(express.json({ limit: "15mb" }));
 
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/data", require("./routes/data"));
+app.use("/api/trash", require("./routes/trash"));
 
 app.get("/api/health", (_, res) => res.json({ ok: true }));
 

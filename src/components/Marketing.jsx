@@ -69,7 +69,7 @@ function MkDiscount({ data, setData, openAdd, registerAdd }) {
       </div>
 
       {discounts.length === 0 ? (
-        <div className="card p-10 text-center text-slate-400 text-sm">
+        <div className="card p-10 text-center text-slate-500 text-sm">
           Chưa có khuyến mãi nào. Nhấn "Thêm" để tạo mới.
         </div>
       ) : (
@@ -107,7 +107,7 @@ function MkDiscount({ data, setData, openAdd, registerAdd }) {
                       {d.minOrder > 0 ? fmtVND(d.minOrder) : "—"}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-500">
-                      {fmtDate(d.startDate)} → {fmtDate(d.endDate) || "∞"}
+                      {fmtDate(d.startDate)} → {d.endDate ? fmtDate(d.endDate) : "∞"}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <button
@@ -115,7 +115,7 @@ function MkDiscount({ data, setData, openAdd, registerAdd }) {
                         className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition ${
                           d.active
                             ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                            : "bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100"
+                            : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
                         }`}
                       >
                         {d.active ? <ToggleRight size={13} /> : <ToggleLeft size={13} />}
@@ -138,7 +138,7 @@ function MkDiscount({ data, setData, openAdd, registerAdd }) {
             <>
               <button className={btnGhost} onClick={() => setShowAdd(false)}>Hủy</button>
               <button
-                className={btnPrimary + (valid ? "" : " opacity-50 pointer-events-none")}
+                disabled={!(valid)} className={btnPrimary + (valid ? "" : " opacity-50 cursor-not-allowed")}
                 onClick={save}
               >Lưu</button>
             </>
@@ -203,7 +203,7 @@ function MkFilter({ data }) {
 
     if (birthday) {
       list = list.filter((c) => {
-        if (!c.dob) return false;
+        if (!c.dob || c.dobYearOnly) return false;
         const m = parseInt(c.dob.split("-")[1], 10);
         return m === thisMonth;
       });
@@ -250,7 +250,7 @@ function MkFilter({ data }) {
                   onClick={() => setDays(v)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                     days === v
-                      ? "bg-sky-600 text-white border-sky-600"
+                      ? "bg-sky-700 text-white border-sky-600"
                       : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                   }`}
                 >
@@ -290,7 +290,7 @@ function MkFilter({ data }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="card p-10 text-center text-slate-400 text-sm">
+        <div className="card p-10 text-center text-slate-500 text-sm">
           Không có khách hàng nào phù hợp.
         </div>
       ) : (
@@ -309,7 +309,7 @@ function MkFilter({ data }) {
               {filtered.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50 transition">
                   <td className="px-4 py-3">
-                    <span className="text-xs text-emerald-600 font-mono">{c.code}</span>
+                    <span className="text-xs text-emerald-700 font-mono">{c.code}</span>
                   </td>
                   <td className="px-4 py-3 font-medium text-slate-800">{c.name}</td>
                   <td className="px-4 py-3 text-slate-600">{c.phone}</td>

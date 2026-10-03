@@ -115,7 +115,7 @@ function WhManage() {
       )}
 
       <div className="relative max-w-xs">
-        <SearchIcon size={14} className="absolute left-3 top-2.5 text-slate-400" />
+        <SearchIcon size={14} className="absolute left-3 top-2.5 text-slate-500" />
         <input
           value={q} onChange={(e) => setQ(e.target.value)}
           placeholder="Tìm vật tư..."
@@ -150,7 +150,7 @@ function WhManage() {
                   <td className={`px-4 py-3 text-center font-semibold ${low ? "text-rose-600" : "text-slate-700"}`}>
                     {item.qty}
                   </td>
-                  <td className="px-4 py-3 text-center text-slate-400 text-xs">{item.minQty}</td>
+                  <td className="px-4 py-3 text-center text-slate-500 text-xs">{item.minQty}</td>
                   <td className="px-4 py-3 text-right text-slate-700">{fmtVND(item.price)}</td>
                   <td className="px-4 py-3 text-center">
                     {low ? (
@@ -165,12 +165,12 @@ function WhManage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => openEdit(item)} title="Sửa"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition">
+                      <button aria-label={`Sửa vật tư ${item.name}`} onClick={() => openEdit(item)} title="Sửa"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => remove(item)} title="Xoá"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition">
+                      <button aria-label={`Xoá vật tư ${item.name}`} onClick={() => remove(item)} title="Xoá"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -179,7 +179,7 @@ function WhManage() {
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-10 text-center text-slate-400">Không có vật tư phù hợp.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-10 text-center text-slate-500">Không có vật tư phù hợp.</td></tr>
             )}
           </tbody>
         </table>
@@ -193,7 +193,7 @@ function WhManage() {
             <>
               <button className={btnGhost} onClick={() => { setShowAdd(false); setEditingId(null); }}>Hủy</button>
               <button
-                className={btnPrimary + (form.name.trim() ? "" : " opacity-50 pointer-events-none")}
+                disabled={!(form.name.trim())} className={btnPrimary + (form.name.trim() ? "" : " opacity-50 cursor-not-allowed")}
                 onClick={save}
               >Lưu</button>
             </>
@@ -231,7 +231,7 @@ function PlaceholderView({ icon: Icon, title, description, color = "slate" }) {
     sky:     "bg-sky-50 text-sky-600",
     violet:  "bg-violet-50 text-violet-600",
     amber:   "bg-amber-50 text-amber-600",
-    emerald: "bg-emerald-50 text-emerald-600",
+    emerald: "bg-emerald-50 text-emerald-700",
   };
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">

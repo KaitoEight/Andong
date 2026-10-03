@@ -21,12 +21,8 @@ export default function LoginPage({ onLogin, onGoRegister }) {
     onLogin(result.user);
   };
 
-  const setQuickUser = (u, p) => {
-    setForm({ username: u, password: p });
-  };
-
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+    <main className="min-h-screen min-h-dvh bg-slate-900 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
       {/* Dynamic Background Blurs & Glows */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -81,7 +77,7 @@ export default function LoginPage({ onLogin, onGoRegister }) {
           </div>
 
           {error && (
-            <div className="mb-4 bg-rose-500/10 text-rose-300 text-xs p-3 rounded-xl border border-rose-500/30 flex items-center gap-2">
+            <div role="alert" className="mb-4 bg-rose-500/10 text-rose-300 text-xs p-3 rounded-xl border border-rose-500/30 flex items-center gap-2">
               <ShieldCheck size={16} className="shrink-0 text-rose-400" />
               <span>{error}</span>
             </div>
@@ -89,12 +85,12 @@ export default function LoginPage({ onLogin, onGoRegister }) {
 
           <form onSubmit={submit} className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1.5">Tên đăng nhập</label>
+              <label htmlFor="login-username" className="text-xs font-semibold text-slate-300 block mb-1.5">Tên đăng nhập</label>
               <div className="relative">
                 <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-800/90 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
-                  placeholder="Nhập tên đăng nhập"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-800/90 text-white text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
+                  id="login-username" name="username" autoComplete="username" placeholder="Nhập tên đăng nhập"
                   value={form.username}
                   onChange={(e) => set("username", e.target.value)}
                   autoFocus
@@ -103,13 +99,13 @@ export default function LoginPage({ onLogin, onGoRegister }) {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1.5">Mật khẩu</label>
+              <label htmlFor="login-password" className="text-xs font-semibold text-slate-300 block mb-1.5">Mật khẩu</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="password"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-800/90 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
-                  placeholder="Nhập mật khẩu"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-800/90 text-white text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
+                  id="login-password" name="password" autoComplete="current-password" placeholder="Nhập mật khẩu"
                   value={form.password}
                   onChange={(e) => set("password", e.target.value)}
                 />
@@ -122,34 +118,16 @@ export default function LoginPage({ onLogin, onGoRegister }) {
               className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition disabled:opacity-50"
             >
               <LogIn size={16} />
-              {loading ? "Đang xử lý..." : "Đăng Nhập Vui Lòng"}
+              {loading ? "Đang xử lý..." : "Đăng Nhập"}
             </button>
           </form>
 
-          {/* Quick Demo Login Preset Buttons */}
-          <div className="mt-6 pt-4 border-t border-slate-800 text-center">
-            <p className="text-[11px] text-slate-400 mb-2 font-medium">Tài khoản thử nghiệm nhanh:</p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <button onClick={() => setQuickUser("admin@gmail.com", "admin123")}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-emerald-400 font-medium border border-slate-700 transition">
-                Admin (admin@gmail.com)
-              </button>
-              <button onClick={() => setQuickUser("bacsi", "123456")}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-sky-400 font-medium border border-slate-700 transition">
-                Bác sĩ (bacsi)
-              </button>
-            </div>
-          </div>
-
           <p className="text-center text-xs text-slate-400 mt-6">
-            Chưa có tài khoản?{" "}
-            <button onClick={onGoRegister} className="text-emerald-400 font-semibold hover:underline">
-              Đăng ký tài khoản mới
-            </button>
+            Chưa có tài khoản? Liên hệ <b className="text-slate-300">Quản lý</b> phòng khám để được cấp tài khoản.
           </p>
         </div>
 
       </div>
-    </div>
+    </main>
   );
 }

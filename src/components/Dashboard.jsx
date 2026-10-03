@@ -84,7 +84,7 @@ export default function Dashboard({ data, go }) {
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30 mb-2">
               <Sparkles size={13} /> Chào mừng quay trở lại
             </div>
-            <h1 className="text-xl lg:text-2xl font-bold font-heading">Bảng Điều Khiển Nha Khoa Victoria</h1>
+            <h2 className="text-xl lg:text-2xl font-bold font-heading">Bảng Điều Khiển Nha Khoa Victoria</h2>
             <p className="text-xs text-slate-300 mt-1">Hệ thống đang hoạt động ổn định. Bạn có {todayAppts.length} lịch hẹn cần xử lý hôm nay.</p>
           </div>
 
@@ -112,10 +112,10 @@ export default function Dashboard({ data, go }) {
             </div>
             <div className={`font-extrabold text-slate-900 font-heading ${s.small ? "text-xl lg:text-2xl" : "text-3xl"}`}>{s.value}</div>
             <div className="mt-2.5 flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md inline-flex items-center gap-0.5">
+              <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md inline-flex items-center gap-0.5">
                 <ArrowUpRight size={12} /> {s.change}
               </span>
-              <span className="text-slate-400 group-hover:text-emerald-600 transition flex items-center gap-0.5 font-medium">
+              <span className="text-slate-500 group-hover:text-emerald-700 transition flex items-center gap-0.5 font-medium">
                 Chi tiết <ChevronRight size={12} />
               </span>
             </div>
@@ -131,12 +131,12 @@ export default function Dashboard({ data, go }) {
           <div className="card p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 grid place-items-center">
                   <TrendingUp size={17} />
                 </div>
                 <h3 className="font-bold text-slate-800 text-sm font-heading">Tiến Độ Khám Hôm Nay</h3>
               </div>
-              <span className="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">{progressPercent}%</span>
+              <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">{progressPercent}%</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2 py-3 text-center bg-slate-50/80 rounded-xl border border-slate-100 mb-4">
@@ -149,7 +149,7 @@ export default function Dashboard({ data, go }) {
                 <div className="text-[11px] text-slate-500 font-medium">Đã đến</div>
               </div>
               <div>
-                <div className="text-lg font-bold text-emerald-600 font-heading">{doneToday}</div>
+                <div className="text-lg font-bold text-emerald-700 font-heading">{doneToday}</div>
                 <div className="text-[11px] text-slate-500 font-medium">Hoàn thành</div>
               </div>
             </div>
@@ -171,7 +171,7 @@ export default function Dashboard({ data, go }) {
             <h3 className="font-bold text-slate-800 text-sm font-heading mb-3">Lối Tắt Nhanh</h3>
             <div className="grid grid-cols-2 gap-2.5">
               <button onClick={() => go("customers")} className="p-3 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-emerald-50/60 hover:border-emerald-200 text-left transition group">
-                <Users size={18} className="text-emerald-600 mb-1 group-hover:scale-110 transition-transform" />
+                <Users size={18} className="text-emerald-700 mb-1 group-hover:scale-110 transition-transform" />
                 <div className="text-xs font-bold text-slate-800">Khách Hàng</div>
                 <div className="text-[10px] text-slate-500">Tra cứu & hồ sơ</div>
               </button>
@@ -189,17 +189,17 @@ export default function Dashboard({ data, go }) {
         <div className="lg:col-span-2 card flex flex-col">
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <CalendarDays size={18} className="text-emerald-600" />
+              <CalendarDays size={18} className="text-emerald-700" />
               <h3 className="font-bold text-slate-800 text-sm font-heading">Danh Sách Lịch Hẹn Hôm Nay</h3>
             </div>
             <button onClick={() => go("appt-today")}
-              className="text-xs text-emerald-600 font-bold flex items-center gap-1 hover:text-emerald-700 hover:underline transition">
+              className="text-xs text-emerald-700 font-bold flex items-center gap-1 hover:text-emerald-800 hover:underline transition">
               Xem tất cả ({todayAppts.length}) <ChevronRight size={14} />
             </button>
           </div>
 
           {todayAppts.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 text-xs flex flex-col items-center justify-center flex-1">
+            <div className="p-12 text-center text-slate-500 text-xs flex flex-col items-center justify-center flex-1">
               <CalendarDays size={36} className="text-slate-300 mb-2 stroke-1" />
               <span>Chưa có lịch hẹn nào được ghi nhận cho hôm nay.</span>
             </div>

@@ -7,7 +7,7 @@ export default function ComingSoon({ view }) {
     <div className="flex flex-col items-center justify-center h-64 text-center">
       <Construction size={40} className="text-slate-300 mb-3" />
       <p className="text-slate-500 font-medium">{found?.child?.label ?? view}</p>
-      <p className="text-slate-400 text-sm mt-1">Tính năng đang được phát triển.</p>
+      <p className="text-slate-500 text-sm mt-1">Tính năng đang được phát triển.</p>
     </div>
   );
 }

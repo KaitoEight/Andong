@@ -8,7 +8,7 @@ export default function Avatar({ src, name, size = 36, rounded = "full", classNa
   return (
     <span
       style={{ ...style, fontSize: Math.round(size * 0.42) }}
-      className={`${radius} bg-gradient-to-br from-emerald-500 to-teal-600 text-white grid place-items-center font-bold shrink-0 ${className}`}
+      className={`${radius} bg-gradient-to-br from-emerald-700 to-teal-800 text-white grid place-items-center font-bold shrink-0 ${className}`}
     >
       {name?.[0]?.toUpperCase() || "?"}
     </span>
