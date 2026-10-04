@@ -279,7 +279,7 @@ export default function CustomerServiceTab({ data, setData, customer }) {
                   <td className="p-2 border-r border-slate-50 text-center text-slate-500">{i + 1}</td>
                   <td className="p-2 border-r border-slate-50">
                     <div className="font-medium text-emerald-700">{r.code} <span className="text-slate-700">{r.name}</span></div>
-                    <div className="flex items-center gap-2 mt-1"><span className="text-slate-500">100 %</span><div className="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 w-full" /></div></div>
+                    <div className="flex items-center gap-2 mt-1"><span className="text-slate-500">{typeof r.completion === "number" ? r.completion : 100} %</span><div className="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-emerald-500" style={{ width: `${typeof r.completion === "number" ? r.completion : 100}%` }} /></div></div>
                     {r.group && <div className="text-[11px] text-slate-500 mt-0.5">{r.group}</div>}
                   </td>
                   <td className="p-2 border-r border-slate-50 text-right">

@@ -16,3 +16,7 @@ data/backup/
 # Ảnh chụp mật khẩu / trang lưu từ phần mềm cũ — KHÔNG đưa lên GitHub
 passMongo.png
 custommayinraw.html
+
+# Dữ liệu khách hàng xuất từ phần mềm cũ — KHÔNG đưa lên GitHub
+data/import/
+*.rar
