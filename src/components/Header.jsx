@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Plus, Search, MapPin, Bell, LogOut, ChevronDown, Eye, X, Menu, ClipboardList, Sparkles, Building2 } from "lucide-react";
+import { Plus, MapPin, Bell, LogOut, ChevronDown, Eye, X, Menu, ClipboardList, Sparkles, Building2 } from "lucide-react";
 import { NAV, findNavChild } from "../utils/constants";
 import { canAccess, ADMIN_ROLE } from "../utils/perms";
+import CustomerSearch from "./CustomerSearch";
 
-export default function Header({ view, setView, onAdd, user, perms, previewRole, onExitPreview, onLogout, onToggleMobile }) {
+export default function Header({ view, setView, onAdd, user, perms, previewRole, onExitPreview, onLogout, onToggleMobile, customers = [], onOpenCustomer, onSearchList }) {
   const [userOpen, setUserOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
 
@@ -55,15 +56,8 @@ export default function Header({ view, setView, onAdd, user, perms, previewRole,
             <span className="w-2 h-2 rounded-full bg-emerald-500 ml-1" />
           </div>
 
-          {/* Quick Search */}
-          <div className="hidden md:block relative">
-            <input
-              onKeyDown={(e) => { if (e.key === "Enter") setView("customers"); }}
-              aria-label="Tìm khách hàng" placeholder="Tìm khách hàng, số ĐT..."
-              className="w-64 pl-3.5 pr-9 py-2 rounded-xl border border-slate-200/80 bg-slate-50 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white transition-all shadow-xs"
-            />
-            <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          </div>
+          {/* Quick Search: tên / SĐT / mã khách → mở hồ sơ trong tab mới */}
+          <CustomerSearch customers={customers} onOpenCustomer={onOpenCustomer} onSearchList={onSearchList} />
 
           {/* Add Button */}
           {addable && (

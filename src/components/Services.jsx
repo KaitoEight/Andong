@@ -23,6 +23,16 @@ function codeOf(s, idx) {
   return s.code || "SV" + String(idx + 1).padStart(6, "0");
 }
 
+// Ô nhập số tiền: chỉ nhận chữ số, hiển thị có dấu chấm ngăn cách hàng nghìn (35.000.000). `value` là chuỗi chữ số.
+function MoneyInput({ value, onChange, label, placeholder }) {
+  return (
+    <input inputMode="numeric" aria-label={label} placeholder={placeholder} autoComplete="off"
+      value={value === "" ? "" : Number(value).toLocaleString("vi-VN")}
+      onChange={(e) => onChange(e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 12))}
+      className={inputCls + " text-xs py-2 w-32 text-right"} />
+  );
+}
+
 export default function Services({ data, setData, openAdd, registerAdd }) {
   const services = data.services || [];
 
@@ -32,6 +42,8 @@ export default function Services({ data, setData, openAdd, registerAdd }) {
   const [status, setStatus] = useState("1");
   const [showSer, setShowSer]   = useState(true);
   const [showProd, setShowProd] = useState(true);
+  const [minPrice, setMinPrice] = useState("");   // lọc đơn giá từ … đến … (chuỗi chữ số, "" = không giới hạn)
+  const [maxPrice, setMaxPrice] = useState("");
 
   const [modal, setModal]   = useState(null);
   const [groupModal, setGroupModal] = useState(false);
@@ -53,6 +65,15 @@ export default function Services({ data, setData, openAdd, registerAdd }) {
   const typeOf = (s) => s.type || "Dịch vụ";
   const isActive = (s) => s.active !== false;
 
+  // Khoảng giá: nhập ngược (từ > đến) thì tự đảo lại cho đúng
+  const { lo, hi, swapped } = useMemo(() => {
+    const a = minPrice === "" ? null : Number(minPrice);
+    const b = maxPrice === "" ? null : Number(maxPrice);
+    const sw = a !== null && b !== null && a > b;
+    return { lo: sw ? b : a, hi: sw ? a : b, swapped: sw };
+  }, [minPrice, maxPrice]);
+  const priceFiltered = lo !== null || hi !== null;
+
   const list = useMemo(() => {
     const ql = q.trim().toLowerCase();
     return services
@@ -64,9 +85,13 @@ export default function Services({ data, setData, openAdd, registerAdd }) {
         if (status === "1" && !isActive(s)) return false;
         if (status === "2" && isActive(s)) return false;
         if (ql && !(s.name + s._code + (s.group || "")).toLowerCase().includes(ql)) return false;
+        if (priceFiltered) {   // dịch vụ chưa có giá ("Tư vấn báo giá") không thuộc khoảng giá nào
+          const p = s.price || 0;
+          if (p <= 0 || (lo !== null && p < lo) || (hi !== null && p > hi)) return false;
+        }
         return true;
       });
-  }, [services, group, q, status, showSer, showProd]);
+  }, [services, group, q, status, showSer, showProd, priceFiltered, lo, hi]);
 
   const openModal = (editing) => {
     const b = editing || {};
@@ -215,6 +240,24 @@ export default function Services({ data, setData, openAdd, registerAdd }) {
               <option value="2">Vô hiệu hóa</option>
               <option value="0">Tất cả</option>
             </select>
+            <div role="group" aria-label="Lọc theo khoảng đơn giá" className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 whitespace-nowrap">
+              <span>Đơn giá</span>
+              <MoneyInput value={minPrice} onChange={setMinPrice} label="Đơn giá từ (₫)" placeholder="Nhỏ nhất" />
+              <span aria-hidden="true">–</span>
+              <MoneyInput value={maxPrice} onChange={setMaxPrice} label="Đơn giá đến (₫)" placeholder="Lớn nhất" />
+              <span>₫</span>
+              {priceFiltered && (
+                <button type="button" onClick={() => { setMinPrice(""); setMaxPrice(""); }} aria-label="Xoá lọc đơn giá" title="Xoá lọc đơn giá"
+                  className="w-7 h-7 grid place-items-center rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="text-xs text-slate-500" aria-live="polite">
+            Hiển thị <b className="text-slate-700">{list.length}</b> / {services.length} dịch vụ
+            {priceFiltered && <> · đơn giá {lo !== null ? <>từ <b className="text-slate-700">{fmtVND(lo)}</b></> : null}{lo !== null && hi !== null ? " " : null}{hi !== null ? <>đến <b className="text-slate-700">{fmtVND(hi)}</b></> : null}</>}
+            {swapped && <span className="text-amber-600 font-semibold"> · đã tự đảo thứ tự “từ – đến”</span>}
           </div>
         </div>
 

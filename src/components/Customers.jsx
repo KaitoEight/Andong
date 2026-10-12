@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search, Phone, MapPin, Cake, Pencil, Trash2, HeartPulse, ImageIcon,
   FileText, CalendarCheck, Wallet, Receipt, X, Plus, ChevronLeft, ArrowUpDown,
@@ -8,7 +8,7 @@ import Badge from "./ui/Badge";
 import Avatar from "./ui/Avatar";
 import Odontogram from "./Odontogram";
 import { inputCls, btnPrimary } from "./ui/Field";
-import { fmtDate, ageFrom, fmtVND, toLocalISODate } from "../utils/helpers";
+import { fmtDate, ageFrom, fmtVND, toLocalISODate, customerMatches, sortCustomersByCreated } from "../utils/helpers";
 import { confirmAndArchive } from "../utils/trash";
 
 const tr = (n) => (n / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 2 }) + " Tr";
@@ -28,8 +28,9 @@ const RANGES = [
   { key: "y1",  label: "1 Năm gần nhất",  days: 365 },
 ];
 
-export default function Customers({ data, setData, openAdd, registerAdd, onEdit, onOpenCustomer }) {
+export default function Customers({ data, setData, openAdd, registerAdd, onEdit, onOpenCustomer, preset }) {
   const [q, setQ]           = useState("");
+  const [newestFirst, setNewestFirst] = useState(true);
   const [tab, setTab]       = useState("profile");
   const [range, setRange]   = useState("all");
   const [source, setSource] = useState("all");
@@ -38,6 +39,12 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
   const [full, setFull]     = useState(false);
 
   registerAdd(() => openAdd("customer"));
+
+  // Từ ô tìm khách ở thanh trên ("Xem cả N kết quả"): lọc sẵn theo từ khoá và bỏ các bộ lọc có thể che mất kết quả
+  useEffect(() => {
+    if (!preset) return;
+    setQ(preset.q); setTab("profile"); setRange("all"); setSource("all");
+  }, [preset?.n]);
 
   const svc = (id) => data.services.find((s) => s.id === id);
   const invoices = data.invoices || [];
@@ -67,8 +74,8 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
   const list = useMemo(() => {
     const ql = q.trim().toLowerCase();
     const inRange = (dateStr) => !fromStr || (dateStr && dateStr >= fromStr);
-    return data.customers.filter((c) => {
-      if (ql && !(c.name + c.phone + c.code).toLowerCase().includes(ql)) return false;
+    const filtered = data.customers.filter((c) => {
+      if (ql && !customerMatches(c, ql)) return false;
       if (source !== "all" && (c.source || "") !== source) return false;
       const appts = apptsOf(c.id);
       switch (tab) {
@@ -80,7 +87,8 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
       }
       return true;
     });
-  }, [data.customers, q, source, tab, fromStr, data.appts, invoices]);
+    return sortCustomersByCreated(filtered, newestFirst);
+  }, [data.customers, q, source, tab, fromStr, data.appts, invoices, newestFirst]);
 
   const shown = limit ? list.slice(0, limit) : list;
 
@@ -186,8 +194,12 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <div className="relative flex-1 sm:w-56">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                  <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nhập tên, SĐT, mã KH..." className={inputCls + " pl-8 text-xs py-2"} />
+                  <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nhập tên, SĐT, mã KH..." aria-label="Tìm khách theo tên, số điện thoại hoặc mã khách" className={inputCls + " pl-8 text-xs py-2"} />
                 </div>
+                <select aria-label="Sắp xếp theo ngày tạo hồ sơ" value={newestFirst ? "new" : "old"} onChange={(e) => setNewestFirst(e.target.value === "new")} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none">
+                  <option value="new">Mới nhất → Cũ nhất</option>
+                  <option value="old">Cũ nhất → Mới nhất</option>
+                </select>
                 <select aria-label="Lọc theo nguồn khách" value={source} onChange={(e) => setSource(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none">
                   <option value="all">Tất cả nguồn</option>
                   {sources.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -210,19 +222,20 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
               </div>
             </div>
 
-            <table className="w-full min-w-[750px] text-left border-collapse text-xs">
+            <table className="w-full min-w-[820px] text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50/90 border-b border-slate-200/80 text-slate-600 font-semibold uppercase tracking-wider">
                   <th className="p-3 w-12 text-center">STT</th>
                   <th className="p-3">Khách Hàng</th>
                   <th className="p-3">Số Điện Thoại</th>
                   <th className="p-3">Địa Chỉ / Nguồn</th>
+                  <th className="p-3 whitespace-nowrap">Ngày Tạo</th>
                   <th className="p-3 text-center w-20">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {shown.length === 0 ? (
-                  <tr><td colSpan={5} className="p-8 text-center text-slate-500">Không tìm thấy khách hàng phù hợp.</td></tr>
+                  <tr><td colSpan={6} className="p-8 text-center text-slate-500">Không tìm thấy khách hàng phù hợp.</td></tr>
                 ) : shown.map((c, idx) => (
                   <tr key={c.id} onClick={() => setSel(c.id)}
                     className={`table-row cursor-pointer ${sel === c.id ? "bg-emerald-50/70 font-medium" : ""}`}>
@@ -240,6 +253,7 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
                     </td>
                     <td className="p-3 font-semibold text-slate-700">{c.phone}</td>
                     <td className="p-3 text-slate-500">{c.address || "Chưa cập nhật"} {c.source && <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-600 ml-1">{c.source}</span>}</td>
+                    <td className="p-3 text-slate-500 whitespace-nowrap">{fmtDate(c.createdAt)}</td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-1">
                         <button aria-label={`Sửa khách hàng ${c.name}`} onClick={(e) => { e.stopPropagation(); onEdit?.(c); }} title="Sửa"

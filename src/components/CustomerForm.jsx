@@ -126,7 +126,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
       onClose();
     } else {
       const n = data.customers.length + 1;
-      const newCust = { id: uid("kh"), code: "NK" + String(n).padStart(6, "0"), ...fields };
+      const newCust = { id: uid("kh"), code: "NK" + String(n).padStart(6, "0"), createdAt: todayStr(), ...fields };
       setData({ ...data, customers: [...data.customers, newCust] });
       onClose();
       if (f.makeAppt) onCreateAppt?.(newCust.id);
