@@ -1,5 +1,7 @@
-import { Tag, FileText, History, Eye, CheckCircle2 } from "lucide-react";
+import { Tag, FileText, History, Eye, CheckCircle2, Printer } from "lucide-react";
 import { todayStr, fmtDate } from "../utils/helpers";
+import { PRINT_FORMS } from "../utils/printForms";
+import { CLINIC } from "../utils/print";
 
 // ─── Danh Mục ────────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -81,10 +83,10 @@ function CfgCategory() {
 }
 
 // ─── Cấu Hình Mẫu In ─────────────────────────────────────────────────────────
-const PRINT_TEMPLATES = [
+// Các mẫu thật nằm ở PRINT_FORMS (utils/printForms.js). Các mục dưới đây chưa có mẫu in.
+const PLANNED_TEMPLATES = [
   { id: "pt1", name: "Phiếu Hẹn",          desc: "In phiếu xác nhận lịch hẹn cho bệnh nhân.",        icon: "📅" },
   { id: "pt2", name: "Đơn Thuốc",           desc: "Mẫu đơn thuốc theo chuẩn Bộ Y Tế.",                icon: "💊" },
-  { id: "pt3", name: "Hóa Đơn Dịch Vụ",   desc: "Hóa đơn thanh toán dịch vụ khám chữa bệnh.",       icon: "🧾" },
   { id: "pt4", name: "Phiếu Điều Trị",      desc: "Tóm tắt quá trình điều trị và kế hoạch tiếp theo.", icon: "🦷" },
   { id: "pt5", name: "Báo Cáo Doanh Thu",  desc: "Báo cáo doanh thu theo ngày / tháng.",              icon: "📊" },
 ];
@@ -96,12 +98,38 @@ function CfgPrint() {
         <div className="p-2 rounded-xl bg-amber-50 text-amber-700"><FileText size={20} /></div>
         <div>
           <h2 className="font-semibold text-slate-800">Cấu Hình Mẫu In</h2>
-          <p className="text-xs text-slate-500">Quản lý các mẫu in của phòng khám</p>
+          <p className="text-xs text-slate-500">
+            Thông tin phòng khám in trên mẫu: <b className="text-slate-700">{CLINIC.name}</b> · {CLINIC.address} · {CLINIC.phone}
+          </p>
         </div>
       </div>
 
       <div className="space-y-2">
-        {PRINT_TEMPLATES.map((tpl) => (
+        {PRINT_FORMS.map((f) => (
+          <div key={f.id} className="card p-4 flex flex-wrap items-center gap-4">
+            <div className="text-2xl w-10 text-center">{f.icon}</div>
+            <div className="flex-1 min-w-[220px]">
+              <div className="font-semibold text-slate-800">{f.name}</div>
+              <div className="text-xs text-slate-500 mt-0.5">{f.desc}</div>
+              <div className="text-[11px] text-emerald-700 font-medium mt-1">Dùng ở: {f.where}</div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => f.sample({ preview: true })} title="Xem mẫu với dữ liệu giả"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition">
+                <Eye size={13} /> Xem trước
+              </button>
+              <button onClick={() => f.blank({})} title="In mẫu để trống, viết tay"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition">
+                <Printer size={13} /> In mẫu trống
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-xs font-semibold text-slate-500 pt-2">Chưa có mẫu in</div>
+      <div className="space-y-2">
+        {PLANNED_TEMPLATES.map((tpl) => (
           <div key={tpl.id} className="card p-4 flex items-center gap-4">
             <div className="text-2xl w-10 text-center">{tpl.icon}</div>
             <div className="flex-1">

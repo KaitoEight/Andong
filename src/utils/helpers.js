@@ -49,3 +49,39 @@ export function sortCustomersByCreated(list, newestFirst = true) {
   if (newestFirst) sorted.reverse();
   return sorted.map((x) => x.c);
 }
+
+// Đọc số tiền thành chữ cho dòng "(Viết bằng chữ)" trên phiếu: 2200000 → "Hai triệu hai trăm nghìn đồng".
+const VI_DIGIT = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
+function viTriple(n, full) {          // n: 0–999; full = có nhóm lớn hơn đứng trước nên phải đọc đủ "không trăm", "lẻ"
+  const h = Math.floor(n / 100), t = Math.floor((n % 100) / 10), u = n % 10;
+  const out = [];
+  if (h > 0 || full) out.push(VI_DIGIT[h] + " trăm");
+  if (t > 1) {
+    out.push(VI_DIGIT[t] + " mươi");
+    if (u === 1) out.push("mốt"); else if (u === 5) out.push("lăm"); else if (u > 0) out.push(VI_DIGIT[u]);
+  } else if (t === 1) {
+    out.push("mười");
+    if (u === 5) out.push("lăm"); else if (u > 0) out.push(VI_DIGIT[u]);
+  } else if (u > 0) {
+    if (h > 0 || full) out.push("lẻ");
+    out.push(VI_DIGIT[u]);
+  }
+  return out.join(" ");
+}
+export function moneyToWordsVi(value) {
+  let n = Math.round(Math.abs(Number(value) || 0));
+  if (n === 0) return "Không đồng";
+  const UNITS = ["", " nghìn", " triệu", " tỷ"];
+  const groups = [];
+  while (n > 0) { groups.push(n % 1000); n = Math.floor(n / 1000); }
+  // nhóm vượt quá "tỷ" (≥ 1000 tỷ) đọc tiếp là "nghìn tỷ", "triệu tỷ"…
+  const words = [];
+  for (let i = groups.length - 1; i >= 0; i--) {
+    if (groups[i] === 0) continue;
+    const full = words.length > 0;
+    const unit = i < UNITS.length ? UNITS[i] : UNITS[3] + UNITS[i - 3];
+    words.push(viTriple(groups[i], full) + unit);
+  }
+  const s = words.join(" ") + " đồng";
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}

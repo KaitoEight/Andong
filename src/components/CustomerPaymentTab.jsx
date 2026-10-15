@@ -7,6 +7,7 @@ import Modal from "./ui/Modal";
 import Field, { inputCls, btnPrimary } from "./ui/Field";
 import { uid, todayStr, fmtDate, fmtVND } from "../utils/helpers";
 import { confirmAndArchive } from "../utils/trash";
+import { CLINIC } from "../utils/print";
 
 export default function CustomerPaymentTab({ data, setData, customer }) {
   const [modal, setModal]           = useState(false);
@@ -311,9 +312,9 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
           <div className="space-y-4 p-4 border border-slate-200 rounded-2xl bg-white text-xs">
             <div className="flex justify-between border-b pb-3">
               <div>
-                <h2 className="font-bold text-slate-900 text-sm font-heading">NHA KHOA VICTORIA</h2>
-                <p className="text-[11px] text-slate-500">ĐC: Trụ sở Victoria HeadOffice</p>
-                <p className="text-[11px] text-slate-500">Hotline: 1900 1234 - 0988 999 888</p>
+                <h2 className="font-bold text-slate-900 text-sm font-heading uppercase">{CLINIC.name}</h2>
+                <p className="text-[11px] text-slate-500">ĐC: {CLINIC.address}</p>
+                <p className="text-[11px] text-slate-500">Hotline: {CLINIC.phone}</p>
               </div>
               <div className="text-right">
                 <h2 className="font-bold text-emerald-700 text-sm">PHIẾU THU TIỀN</h2>

@@ -6,7 +6,7 @@ import Modal from "./ui/Modal";
 import Avatar from "./ui/Avatar";
 import Field, { inputCls, btnPrimary, btnGhost } from "./ui/Field";
 import { uid, todayStr, fmtVND, fmtDate } from "../utils/helpers";
-import { printInvoice } from "../utils/print";
+import { printInvoice } from "../utils/printForms";
 import { confirmAndArchive } from "../utils/trash";
 
 const METHODS = ["Tiền mặt", "Chuyển khoản", "Quẹt thẻ", "Ví điện tử"];

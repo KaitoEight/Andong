@@ -1,10 +1,12 @@
 import { fmtVND, fmtDate } from "./helpers";
 
+// Thông tin phòng khám in trên mọi mẫu (một chỗ duy nhất để sửa).
+// LƯU Ý: địa chỉ & số điện thoại dưới đây vẫn là số liệu mẫu — hãy thay bằng thông tin thật của Nha Khoa An Đông.
 export const CLINIC = {
-  name: "NHA KHOA VICTORIA",
-  address: "Số 1, Đường An Dương Vương, Quận 5, TP. Hồ Chí Minh",
-  phone: "0901 234 567",
-  email: "lienhe@nhakhoaandong.vn",
+  name: "Nha Khoa An Đông",
+  address: "81, Đường Nguyễn Duy Dương, Quận 5, TP. Hồ Chí Minh",
+  phone: "0336699387",
+  email: "nhakhoaandong@gmail.com",
 };
 
 const STYLE = `
@@ -12,7 +14,7 @@ const STYLE = `
   body { font-family: 'Segoe UI', system-ui, sans-serif; color: #1e293b; padding: 28px 32px; }
   .head { display:flex; align-items:center; gap:14px; border-bottom:2px solid #10b981; padding-bottom:14px; margin-bottom:18px; }
   .logo { width:48px; height:48px; border-radius:12px; background:#10b981; color:#fff; display:grid; place-items:center; font-weight:700; font-size:24px; }
-  .clinic-name { font-size:18px; font-weight:700; color:#0f766e; }
+  .clinic-name { font-size:18px; font-weight:700; color:#0f766e; text-transform:uppercase; }
   .clinic-sub { font-size:12px; color:#64748b; margin-top:2px; }
   h1 { font-size:20px; text-align:center; margin:8px 0 4px; letter-spacing:1px; }
   .meta { text-align:center; font-size:12px; color:#64748b; margin-bottom:18px; }
@@ -33,15 +35,24 @@ const STYLE = `
   @media print { body { padding:0; } }
 `;
 
-function open(title, body) {
-  const w = window.open("", "_blank", "width=820,height=920");
+// Thoát ký tự HTML: dữ liệu khách / dịch vụ do người dùng nhập được chèn vào cửa sổ in, không được để chạy như mã.
+export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// Mở cửa sổ in. css: định dạng riêng của mẫu (khổ giấy @page…). base=false: không dùng kiểu mặc định ở trên.
+// preview=true: chỉ xem (không tự bật hộp thoại in) và có nút "In" nổi ở góc.
+export function openPrintWindow(title, body, { css = "", base = true, preview = false } = {}) {
+  const w = window.open("", "_blank", "width=900,height=960");
   if (!w) { alert("Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup rồi thử lại."); return; }
+  const tail = preview
+    ? `<button class="no-print" onclick="window.print()" style="position:fixed;right:16px;top:16px;padding:8px 18px;border:0;border-radius:8px;background:#047857;color:#fff;font:600 13px sans-serif;cursor:pointer">In</button>`
+    : `<script>window.onload=function(){window.focus();window.print();}</script>`;
   w.document.write(
-    `<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${title}</title><style>${STYLE}</style></head>` +
-    `<body>${body}<script>window.onload=function(){window.focus();window.print();}</script></body></html>`
+    `<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${base ? STYLE : ""}${css}@media print{.no-print{display:none!important}}</style></head>` +
+    `<body>${body}${tail}</body></html>`
   );
   w.document.close();
 }
+const open = (title, body) => openPrintWindow(title, body);
 
 function header() {
   return `<div class="head">
@@ -58,38 +69,6 @@ function sign(left, right) {
     <div><div class="ttl">${left}</div><div class="hint">(Ký, ghi rõ họ tên)</div></div>
     <div><div class="ttl">${right}</div><div class="hint">(Ký, ghi rõ họ tên)</div></div>
   </div>`;
-}
-
-// ── Hoá đơn ──────────────────────────────────────────────────────────────────
-export function printInvoice(inv, customer) {
-  const rows = (inv.items || []).map((it, i) => `
-    <tr>
-      <td class="ctr">${i + 1}</td>
-      <td>${it.name}</td>
-      <td class="ctr">${it.qty}</td>
-      <td class="num">${fmtVND(it.price)}</td>
-      <td class="num">${fmtVND((it.price || 0) * (it.qty || 0))}</td>
-    </tr>`).join("");
-  const debt = (inv.total || 0) - (inv.paid || 0);
-  open(`Hoá đơn ${inv.code}`,
-    header() +
-    `<h1>HOÁ ĐƠN THANH TOÁN</h1>
-     <div class="meta">Số: ${inv.code} · Ngày: ${fmtDate(inv.date)}</div>
-     <div class="row">
-       <div><span class="label">Khách hàng:</span> <b>${customer?.name || "—"}</b></div>
-       <div><span class="label">SĐT:</span> ${customer?.phone || "—"}</div>
-       <div><span class="label">Mã KH:</span> ${customer?.code || "—"}</div>
-     </div>
-     <table>
-       <thead><tr><th class="ctr">STT</th><th>Dịch vụ</th><th class="ctr">SL</th><th class="num">Đơn giá</th><th class="num">Thành tiền</th></tr></thead>
-       <tbody>${rows}</tbody>
-     </table>
-     <div class="total">Tổng cộng: <span>${fmtVND(inv.total)}</span></div>
-     <div class="total" style="font-size:13px;font-weight:500;color:#475569">Đã thanh toán: ${fmtVND(inv.paid)} (${inv.method || "—"})</div>
-     ${debt > 0 ? `<div class="total" style="font-size:13px;font-weight:600;color:#e11d48">Còn nợ: ${fmtVND(debt)}</div>` : ""}
-     ${inv.note ? `<div class="note">Ghi chú: ${inv.note}</div>` : ""}
-     ${sign("Khách hàng", "Người lập phiếu")}`
-  );
 }
 
 // ── Đơn thuốc ────────────────────────────────────────────────────────────────

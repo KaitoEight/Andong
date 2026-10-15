@@ -3,6 +3,12 @@ import {
   Package, Megaphone, Plug, UserCog, Settings, BarChart3, LayoutDashboard,
 } from "lucide-react";
 
+// Nhãn tình trạng răng (dùng ở sơ đồ răng và mẫu in bệnh án)
+export const TOOTH_STATE_LABELS = {
+  healthy: "Bình thường", caries: "Sâu răng", filled: "Đã trám", crown: "Bọc sứ",
+  implant: "Implant", treating: "Đang điều trị", missing: "Mất / đã nhổ",
+};
+
 export const STATUS = {
   pending:   { label: "Chờ xác nhận", cls: "bg-amber-50 text-amber-700 border-amber-200" },
   confirmed: { label: "Đã xác nhận",  cls: "bg-sky-50 text-sky-700 border-sky-200" },

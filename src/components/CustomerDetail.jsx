@@ -8,6 +8,7 @@ import CustomerTreatmentTab from "./CustomerTreatmentTab";
 import CustomerRecordTab from "./CustomerRecordTab";
 import CustomerPaymentTab from "./CustomerPaymentTab";
 import { fmtDate, ageFrom } from "../utils/helpers";
+import { printDiagnosisForm, printMedicalRecord } from "../utils/printForms";
 
 const num = (n) => (n || 0).toLocaleString("vi-VN");
 
@@ -80,9 +81,21 @@ export default function CustomerDetail({ data, setData, customer: c, tab, onTab,
     <div className="-m-4">
       {/* Banner */}
       <div className="bg-emerald-50/50 border-b border-slate-200 px-6 pt-3">
-        <button onClick={onBack} className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 mb-2">
-          <ChevronLeft size={14} /> Quay lại danh sách
-        </button>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <button onClick={onBack} className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800">
+            <ChevronLeft size={14} /> Quay lại danh sách
+          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => printDiagnosisForm(c)} title="In Form chẩn đoán (phiếu tư vấn khách hàng) đã điền sẵn thông tin khách"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition">
+              <Printer size={12} /> Form chẩn đoán
+            </button>
+            <button onClick={() => printMedicalRecord(c)} title="In Form bệnh án (tổng quát) kèm tình trạng răng và lịch sử điều trị"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition">
+              <Printer size={12} /> Bệnh án
+            </button>
+          </div>
+        </div>
         <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
           <div className="flex items-center gap-4">
             <Avatar src={c.avatar} name={c.name} size={56} className="border-2 border-white shadow-sm" />

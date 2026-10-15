@@ -1,16 +1,17 @@
 import { useState } from "react";
+import { TOOTH_STATE_LABELS } from "../utils/constants";
 
 const UPPER = [18,17,16,15,14,13,12,11, 21,22,23,24,25,26,27,28];
 const LOWER = [48,47,46,45,44,43,42,41, 31,32,33,34,35,36,37,38];
 
 const STATES = {
-  healthy: { label: "Bình thường",     cls: "bg-white border-slate-200 text-slate-700 shadow-xs", dot: "bg-slate-300" },
-  caries:  { label: "Sâu răng",        cls: "bg-amber-50 border-amber-300 text-amber-800 font-bold", dot: "bg-amber-500" },
-  filled:  { label: "Đã trám",         cls: "bg-sky-50 border-sky-300 text-sky-800 font-bold", dot: "bg-sky-500" },
-  crown:   { label: "Bọc sứ",          cls: "bg-violet-50 border-violet-300 text-violet-800 font-bold", dot: "bg-violet-500" },
-  implant: { label: "Implant",         cls: "bg-emerald-50 border-emerald-400 text-emerald-800 font-bold", dot: "bg-emerald-700" },
-  treating:{ label: "Đang điều trị",   cls: "bg-orange-50 border-orange-300 text-orange-800 font-bold", dot: "bg-orange-500" },
-  missing: { label: "Mất / đã nhổ",    cls: "bg-slate-100 border-slate-200 text-slate-300 line-through", dot: "bg-slate-400" },
+  healthy: { label: TOOTH_STATE_LABELS.healthy,     cls: "bg-white border-slate-200 text-slate-700 shadow-xs", dot: "bg-slate-300" },
+  caries:  { label: TOOTH_STATE_LABELS.caries,        cls: "bg-amber-50 border-amber-300 text-amber-800 font-bold", dot: "bg-amber-500" },
+  filled:  { label: TOOTH_STATE_LABELS.filled,         cls: "bg-sky-50 border-sky-300 text-sky-800 font-bold", dot: "bg-sky-500" },
+  crown:   { label: TOOTH_STATE_LABELS.crown,          cls: "bg-violet-50 border-violet-300 text-violet-800 font-bold", dot: "bg-violet-500" },
+  implant: { label: TOOTH_STATE_LABELS.implant,         cls: "bg-emerald-50 border-emerald-400 text-emerald-800 font-bold", dot: "bg-emerald-700" },
+  treating:{ label: TOOTH_STATE_LABELS.treating,   cls: "bg-orange-50 border-orange-300 text-orange-800 font-bold", dot: "bg-orange-500" },
+  missing: { label: TOOTH_STATE_LABELS.missing,    cls: "bg-slate-100 border-slate-200 text-slate-300 line-through", dot: "bg-slate-400" },
 };
 const ORDER = ["healthy", "caries", "filled", "crown", "implant", "treating", "missing"];
 
