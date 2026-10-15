@@ -7,6 +7,7 @@ import Avatar from "./ui/Avatar";
 import Field, { inputCls, btnPrimary, btnGhost } from "./ui/Field";
 import { uid, todayStr, fmtVND, fmtDate } from "../utils/helpers";
 import { printInvoice } from "../utils/printForms";
+import { invoiceStatus as statusOf } from "../utils/finance";
 import { confirmAndArchive } from "../utils/trash";
 
 const METHODS = ["Tiền mặt", "Chuyển khoản", "Quẹt thẻ", "Ví điện tử"];
@@ -17,11 +18,6 @@ const STATUS = {
   unpaid:  { label: "Chưa thanh toán", cls: "bg-rose-50 text-rose-700 border-rose-200" },
 };
 
-function statusOf(total, paid) {
-  if (paid >= total && total > 0) return "paid";
-  if (paid > 0) return "partial";
-  return "unpaid";
-}
 
 export default function Invoices({ data, setData, openAdd, registerAdd }) {
   const invoices = data.invoices || [];
@@ -190,7 +186,7 @@ export default function Invoices({ data, setData, openAdd, registerAdd }) {
               {list.map((inv) => {
                 const c = cust(inv.customerId);
                 const debt = (inv.total || 0) - (inv.paid || 0);
-                const st = STATUS[inv.status] || STATUS.unpaid;
+                const st = STATUS[statusOf(inv.total, inv.paid)];
                 return (
                   <tr key={inv.id} className="hover:bg-slate-50 transition">
                     <td className="px-4 py-3 font-mono text-xs text-emerald-700">{inv.code}</td>

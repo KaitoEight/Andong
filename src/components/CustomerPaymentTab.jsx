@@ -8,6 +8,7 @@ import Field, { inputCls, btnPrimary } from "./ui/Field";
 import { uid, todayStr, fmtDate, fmtVND } from "../utils/helpers";
 import { confirmAndArchive } from "../utils/trash";
 import { CLINIC } from "../utils/print";
+import { invoiceStatus } from "../utils/finance";
 
 export default function CustomerPaymentTab({ data, setData, customer }) {
   const [modal, setModal]           = useState(false);
@@ -40,6 +41,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
     if (paidAmt <= 0) return;
 
     const code = "HD" + todayStr().replace(/-/g, "") + "." + String(invoices.length + 1).padStart(3, "0");
+    const invTotal = paidAmt > totalDebt && totalDebt > 0 ? paidAmt : (totalDebt || paidAmt);
     const newInvoice = {
       id: uid("inv"),
       code,
@@ -48,8 +50,9 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
       customerPhone: customer.phone,
       date: todayStr(),
       time: new Date().toTimeString().slice(0, 5),
-      total: paidAmt > totalDebt && totalDebt > 0 ? paidAmt : (totalDebt || paidAmt),
+      total: invTotal,
       paid: paidAmt,
+      status: invoiceStatus(invTotal, paidAmt),
       method: form.method,
       staff: form.staff,
       note: form.note,
@@ -83,6 +86,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
         ? {
             ...inv,
             paid: paidAmt,
+            status: invoiceStatus(inv.total, paidAmt),
             method: editModal.method,
             staff: editModal.staff,
             note: editModal.note,

@@ -28,3 +28,12 @@ export function paidOfCustomer(data, customerId) {
     .filter((i) => i.customerId === customerId)
     .reduce((s, i) => s + (i.paid || 0), 0);
 }
+
+// Trạng thái thanh toán của một hoá đơn / phiếu thu, tính từ số tiền (không tin vào trường `status` đã lưu:
+// phiếu thu lập từ tab Thanh toán của khách trước đây không có `status`, hoặc bị cũ sau khi sửa số tiền).
+export function invoiceStatus(total, paid) {
+  total = Number(total) || 0; paid = Number(paid) || 0;
+  if (paid >= total && total > 0) return "paid";
+  if (paid > 0) return "partial";
+  return "unpaid";
+}
