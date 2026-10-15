@@ -51,8 +51,8 @@ export default function RegisterPage({ onGoLogin }) {
       <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="w-full max-w-md bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-3xl shadow-2xl p-8 animate-pop">
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-slate-950 grid place-items-center font-extrabold text-2xl font-heading shadow-lg shadow-emerald-500/30 mx-auto mb-3">
-            V
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-slate-950 grid place-items-center font-extrabold text-xl font-heading shadow-lg shadow-emerald-500/30 mx-auto mb-3">
+            AĐ
           </div>
           <h1 className="text-xl font-bold text-white font-heading">Đăng Ký Tài Khoản</h1>
           <p className="text-xs text-slate-400 mt-1">Khởi tạo tài khoản truy cập hệ thống Nha Khoa</p>

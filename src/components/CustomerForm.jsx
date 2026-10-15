@@ -241,7 +241,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className={labelCls}>Chi nhánh</label>
-                        <select aria-label="Chi nhánh" className={fieldCls} defaultValue="andong"><option value="andong">Nha Khoa Victoria</option></select>
+                        <select aria-label="Chi nhánh" className={fieldCls} defaultValue="andong"><option value="andong">Nha Khoa An Đông</option></select>
                       </div>
                       <div>
                         <label className={labelCls}>Nhóm khách hàng</label>

@@ -52,7 +52,7 @@ export default function Header({ view, setView, onAdd, user, perms, previewRole,
           {/* Active Facility Tag */}
           <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/80 text-xs font-semibold text-slate-600 border border-slate-200/60">
             <Building2 size={14} className="text-emerald-700" />
-            <span>Victoria HeadOffice</span>
+            <span>Nha Khoa An Đông</span>
             <span className="w-2 h-2 rounded-full bg-emerald-500 ml-1" />
           </div>
 

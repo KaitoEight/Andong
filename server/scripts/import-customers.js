@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * Migrate "Danh sách khách hàng.xlsx" (xuất từ phần mềm cũ VTTECH) vào database Nha Khoa Victoria.
+ * Migrate "Danh sách khách hàng.xlsx" (xuất từ phần mềm cũ VTTECH) vào database Nha Khoa An Đông.
  *
  * Cách dùng (chạy từ thư mục gốc dự án):
  *   node server/scripts/import-customers.js                 # CHẠY THỬ: chỉ đọc, in báo cáo, không ghi gì

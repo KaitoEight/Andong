@@ -84,7 +84,7 @@ export default function Dashboard({ data, go }) {
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30 mb-2">
               <Sparkles size={13} /> Chào mừng quay trở lại
             </div>
-            <h2 className="text-xl lg:text-2xl font-bold font-heading">Bảng Điều Khiển Nha Khoa Victoria</h2>
+            <h2 className="text-xl lg:text-2xl font-bold font-heading">Bảng Điều Khiển Nha Khoa An Đông</h2>
             <p className="text-xs text-slate-300 mt-1">Hệ thống đang hoạt động ổn định. Bạn có {todayAppts.length} lịch hẹn cần xử lý hôm nay.</p>
           </div>
 

@@ -41,12 +41,12 @@ export default function Sidebar({ view, setView, user, onLogout, perms, realRole
         {/* Brand Logo Header */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700 text-white grid place-items-center font-extrabold text-xl shadow-md shadow-emerald-500/20 font-heading">
-              V
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700 text-white grid place-items-center font-extrabold text-lg shadow-md shadow-emerald-500/20 font-heading">
+              AĐ
             </div>
             <div>
               <div className="font-bold text-slate-900 text-base leading-snug tracking-tight font-heading flex items-center gap-1.5">
-                Nha Khoa Victoria
+                Nha Khoa An Đông
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               </div>
               <div className="text-[11px] text-slate-500 font-medium">Hệ Thống Quản Lý Nha Khoa</div>

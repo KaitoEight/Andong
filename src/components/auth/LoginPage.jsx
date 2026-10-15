@@ -33,11 +33,11 @@ export default function LoginPage({ onLogin, onGoRegister }) {
         <div className="p-8 lg:p-10 bg-gradient-to-br from-emerald-900/60 via-slate-900/80 to-slate-900 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-700/60">
           <div>
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-slate-950 grid place-items-center font-extrabold text-2xl font-heading shadow-lg shadow-emerald-500/30">
-                V
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-slate-950 grid place-items-center font-extrabold text-xl font-heading shadow-lg shadow-emerald-500/30">
+                AĐ
               </div>
               <div>
-                <h2 className="text-xl font-extrabold text-white font-heading tracking-tight">Nha Khoa Victoria</h2>
+                <h2 className="text-xl font-extrabold text-white font-heading tracking-tight">Nha Khoa An Đông</h2>
                 <p className="text-xs text-emerald-400 font-semibold tracking-wide uppercase">Phần Mềm Quản Lý Nha Khoa</p>
               </div>
             </div>

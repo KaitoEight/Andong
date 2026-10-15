@@ -253,7 +253,7 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                   <span className="text-slate-500">Tổng lịch</span>{" "}
                   <span className="font-semibold text-slate-700">{date.split("-").reverse().join("-")}</span>
                 </div>
-                <div className="text-sm font-medium text-slate-600 mb-2">Nha Khoa Victoria</div>
+                <div className="text-sm font-medium text-slate-600 mb-2">Nha Khoa An Đông</div>
                 <div className="flex gap-2">
                   <button onClick={() => setDayPart("morning")}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${dayPart === "morning" ? "bg-white shadow-sm text-emerald-700 ring-1 ring-emerald-200" : "text-slate-500 hover:bg-white/60"}`}>
@@ -374,8 +374,8 @@ export default function AppointmentForm({ data, setData, onClose, editing, initi
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                     <div>
                       <label className={labelCls}>Chi nhánh</label>
-                      <select aria-label="Chi nhánh" className={fieldCls} defaultValue="victoria">
-                        <option value="victoria">Nha Khoa Victoria</option>
+                      <select aria-label="Chi nhánh" className={fieldCls} defaultValue="andong">
+                        <option value="andong">Nha Khoa An Đông</option>
                       </select>
                     </div>
                     <div>
