@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Search, Phone, MapPin, Cake, Pencil, Trash2, HeartPulse, ImageIcon,
   FileText, CalendarCheck, Wallet, Receipt, X, Plus, ChevronLeft, ArrowUpDown,
@@ -30,7 +30,7 @@ const RANGES = [
 
 export default function Customers({ data, setData, openAdd, registerAdd, onEdit, onOpenCustomer, preset }) {
   const [q, setQ]           = useState("");
-  const [newestFirst, setNewestFirst] = useState(true);
+  const [newestFirst, setNewestFirst] = useState(false);   // mặc định cũ → mới: khách mới nhập nằm cuối danh sách
   const [tab, setTab]       = useState("profile");
   const [range, setRange]   = useState("all");
   const [source, setSource] = useState("all");
@@ -41,10 +41,19 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
   registerAdd(() => openAdd("customer"));
 
   // Từ ô tìm khách ở thanh trên ("Xem cả N kết quả"): lọc sẵn theo từ khoá và bỏ các bộ lọc có thể che mất kết quả
+  // Hoặc từ form thêm khách (focusId): khách mới nằm cuối danh sách nên hiện tất cả, chọn dòng đó và cuộn tới nó
+  const rootRef = useRef(null);
+  const pendingFocus = useRef(null);
   useEffect(() => {
     if (!preset) return;
-    setQ(preset.q); setTab("profile"); setRange("all"); setSource("all");
+    setQ(preset.q || ""); setTab("profile"); setRange("all"); setSource("all");
+    if (preset.focusId) { setNewestFirst(false); setLimit(0); setSel(preset.focusId); pendingFocus.current = preset.focusId; }
   }, [preset?.n]);
+  useEffect(() => {
+    if (!pendingFocus.current) return;
+    const row = rootRef.current?.querySelector(`tr[data-cid="${pendingFocus.current}"]`);
+    if (row) { row.scrollIntoView({ block: "center" }); pendingFocus.current = null; }
+  });
 
   const svc = (id) => data.services.find((s) => s.id === id);
   const invoices = data.invoices || [];
@@ -154,7 +163,7 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
   );
 
   return (
-    <div className="space-y-5 animate-fade">
+    <div ref={rootRef} className="space-y-5 animate-fade">
       {/* Top Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={FileText}      label="Tổng Hồ Sơ Khách Hàng" value={stats.total} grad="from-violet-500 to-purple-600" />
@@ -237,7 +246,7 @@ export default function Customers({ data, setData, openAdd, registerAdd, onEdit,
                 {shown.length === 0 ? (
                   <tr><td colSpan={6} className="p-8 text-center text-slate-500">Không tìm thấy khách hàng phù hợp.</td></tr>
                 ) : shown.map((c, idx) => (
-                  <tr key={c.id} onClick={() => setSel(c.id)}
+                  <tr key={c.id} data-cid={c.id} onClick={() => setSel(c.id)}
                     className={`table-row cursor-pointer ${sel === c.id ? "bg-emerald-50/70 font-medium" : ""}`}>
                     <td className="p-3 text-center text-slate-500 font-semibold">{idx + 1}</td>
                     <td className="p-3">

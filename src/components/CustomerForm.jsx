@@ -70,7 +70,7 @@ function initFrom(ed) {
   };
 }
 
-export default function CustomerForm({ data, setData, onClose, editing, onCreateAppt }) {
+export default function CustomerForm({ data, setData, onClose, editing, onCreateAppt, onCreated }) {
   const dialogRef = useDialog(onClose);
   const ed = editing || null;
   const [tab, setTab] = useState("main");
@@ -128,6 +128,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
       const n = data.customers.length + 1;
       const newCust = { id: uid("kh"), code: "NK" + String(n).padStart(6, "0"), createdAt: todayStr(), ...fields };
       setData({ ...data, customers: [...data.customers, newCust] });
+      onCreated?.(newCust.id);
       onClose();
       if (f.makeAppt) onCreateAppt?.(newCust.id);
     }

@@ -378,6 +378,7 @@ export default function App() {
           setData={setData}
           editing={editCust}
           onCreateAppt={(id) => { setApptCustId(id); }}
+          onCreated={(id) => dispatch({ type: "open", spec: { kind: "view", view: "customers", preset: { q: "", n: Date.now(), focusId: id } } })}
           onClose={() => { setAdding(null); setEditCust(null); }}
         />
       )}
