@@ -28,6 +28,7 @@ import Integration    from "./src/components/Integration";
 import Configuration  from "./src/components/Configuration";
 import Trash          from "./src/components/Trash";
 import { loadData, saveData } from "./src/utils/storage";
+import { stampCreatedAt } from "./src/utils/helpers";
 import { getSession, clearSession } from "./src/utils/auth";
 import { findNavChild, pathForView, viewForPath } from "./src/utils/constants";
 import { loadPerms, savePerms, canAccess, ROLES, ADMIN_ROLE } from "./src/utils/perms";
@@ -119,7 +120,7 @@ export default function App() {
   const wantHash = activeTab.kind === "customer" ? detailHash(activeTab.customerId, activeTab.customerTab) : pathForView(activeTab.view);
   const customersById = useMemo(() => new Map((data?.customers || []).map((c) => [c.id, c])), [data?.customers]);
 
-  useEffect(() => { if (user) loadData().then(setData); }, [user]);
+  useEffect(() => { if (user) loadData().then((d) => setData(stampCreatedAt(d))); }, [user]);
   useEffect(() => { if (data) saveData(data); }, [data]);
   useEffect(() => { if (user) saveTabs(tabsState); }, [tabsState, user]);
 

@@ -40,14 +40,32 @@ export function customerMatches(c, query) {
   });
 }
 
-// Sắp khách theo ngày tạo. Khách chưa có ngày tạo (tạo trong app trước khi có trường này) được thêm vào
-// CUỐI mảng nên coi là mới nhất; cùng ngày thì theo thứ tự trong mảng (mảng luôn thêm theo thứ tự tạo).
+// Khách chưa có ngày tạo (tạo trong app trước khi có trường này) → mặc định NGÀY HIỆN TẠI. Ghi cố định một lần khi
+// tải dữ liệu để ngày không đổi theo từng ngày mở app (trả về đúng object cũ nếu không có khách nào thiếu ngày).
+export function stampCreatedAt(data) {
+  if (!data?.customers?.some((c) => !c.createdAt)) return data;
+  const today = todayStr();
+  return { ...data, customers: data.customers.map((c) => (c.createdAt ? c : { ...c, createdAt: today })) };
+}
+
+// Sắp khách theo ngày tạo (thiếu ngày = hôm nay); cùng ngày thì theo thứ tự trong mảng (mảng luôn thêm theo thứ tự tạo).
 export function sortCustomersByCreated(list, newestFirst = true) {
+  const today = todayStr();
   const sorted = list
-    .map((c, i) => ({ c, d: c.createdAt || "9999-12-31", i }))
+    .map((c, i) => ({ c, d: c.createdAt || today, i }))
     .sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.i - b.i));
   if (newestFirst) sorted.reverse();
   return sorted.map((x) => x.c);
+}
+
+// Mã cho khách tạo trong app: "NK" + số, lấy số NK lớn nhất đang có + 1. Không dùng "số khách + 1": xoá một khách rồi
+// thêm khách mới sẽ trùng mã khách đã có. Giữ tiền tố "NK" riêng để không đụng mã NDD… của phần mềm cũ khi nhập lại.
+export function nextCustomerCode(customers) {
+  const list = customers || [];
+  const used = new Set(list.map((c) => c.code));
+  let n = list.reduce((m, c) => { const k = /^NK(\d+)$/.exec(c.code || ""); return k ? Math.max(m, Number(k[1])) : m; }, 0) + 1;
+  while (used.has("NK" + String(n).padStart(6, "0"))) n++;
+  return "NK" + String(n).padStart(6, "0");
 }
 
 // Đọc số tiền thành chữ cho dòng "(Viết bằng chữ)" trên phiếu: 2200000 → "Hai triệu hai trăm nghìn đồng".

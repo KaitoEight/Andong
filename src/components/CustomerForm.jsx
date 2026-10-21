@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Info, CircleUserRound, Camera, X } from "lucide-react";
-import { uid, todayStr } from "../utils/helpers";
+import { uid, todayStr, nextCustomerCode } from "../utils/helpers";
 import useDialog from "../utils/useDialog";
 
 // Đọc file ảnh, thu nhỏ về tối đa `max` px rồi trả về data URL (nhẹ để lưu DB)
@@ -54,6 +54,7 @@ function initFrom(ed) {
     ward: ed?.ward || "",
     oldCode: ed?.oldCode || "",
     language: ed?.language || "Tiếng Việt",
+    createdAt: ed?.createdAt || "",   // ngày tạo hồ sơ; để trống = hôm nay
     note: ed?.note || "",
     idCard: ed?.idCard || "",
     idDate: ed?.idDate || "",
@@ -115,6 +116,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
       group: f.group || "Mới", email: f.email, source: f.source, sourceDetail: f.sourceDetail,
       nationality: f.nationality, occupation: f.occupation, address: f.address,
       province: f.province, ward: f.ward, oldCode: f.oldCode, language: f.language,
+      createdAt: (f.createdAt && f.createdAt <= todayStr() ? f.createdAt : "") || ed?.createdAt || todayStr(),
       note: f.note, idCard: f.idCard, idDate: f.idDate, idPlace: f.idPlace,
       avatar: f.avatar,
       medicalHistory: f.medicalHistory, allergy: f.allergy,
@@ -125,8 +127,7 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
       setData({ ...data, customers: data.customers.map((c) => c.id === ed.id ? { ...c, ...fields } : c) });
       onClose();
     } else {
-      const n = data.customers.length + 1;
-      const newCust = { id: uid("kh"), code: "NK" + String(n).padStart(6, "0"), createdAt: todayStr(), ...fields };
+      const newCust = { id: uid("kh"), code: nextCustomerCode(data.customers), ...fields };
       setData({ ...data, customers: [...data.customers, newCust] });
       onCreated?.(newCust.id);
       onClose();
@@ -308,6 +309,11 @@ export default function CustomerForm({ data, setData, onClose, editing, onCreate
                         <select aria-label="Ngôn ngữ" className={fieldCls} value={f.language} onChange={(e) => set("language", e.target.value)}>
                           {LANGUAGES.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
+                      </div>
+                      <div>
+                        <label className={labelCls}>Ngày tạo hồ sơ</label>
+                        <input type="date" aria-label="Ngày tạo hồ sơ" max={todayStr()} className={fieldCls} value={f.createdAt} onChange={(e) => set("createdAt", e.target.value)} />
+                        <p className="text-[11px] text-slate-500 mt-1">Để trống = hôm nay</p>
                       </div>
                     </div>
 

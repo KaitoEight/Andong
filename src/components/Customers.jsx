@@ -30,29 +30,34 @@ const RANGES = [
 
 export default function Customers({ data, setData, openAdd, registerAdd, onEdit, onOpenCustomer, preset }) {
   const [q, setQ]           = useState("");
-  const [newestFirst, setNewestFirst] = useState(false);   // mặc định cũ → mới: khách mới nhập nằm cuối danh sách
+  const [newestFirst, setNewestFirst] = useState(true);   // mặc định mới nhất → cũ nhất
   const [tab, setTab]       = useState("profile");
   const [range, setRange]   = useState("all");
   const [source, setSource] = useState("all");
   const [limit, setLimit]   = useState(20);
   const [sel, setSel]       = useState(null);
   const [full, setFull]     = useState(false);
+  const [, forceRender]   = useState(0);   // đảm bảo có thêm một lượt vẽ sau khi bộ lọc được xoá (xem hiệu ứng focus)
 
   registerAdd(() => openAdd("customer"));
 
   // Từ ô tìm khách ở thanh trên ("Xem cả N kết quả"): lọc sẵn theo từ khoá và bỏ các bộ lọc có thể che mất kết quả
-  // Hoặc từ form thêm khách (focusId): khách mới nằm cuối danh sách nên hiện tất cả, chọn dòng đó và cuộn tới nó
+  // Hoặc từ form thêm khách (focusId): chọn dòng khách vừa nhập và cuộn tới nó (nếu nằm ngoài trang hiện tại thì hiện tất cả)
   const rootRef = useRef(null);
   const pendingFocus = useRef(null);
   useEffect(() => {
     if (!preset) return;
     setQ(preset.q || ""); setTab("profile"); setRange("all"); setSource("all");
-    if (preset.focusId) { setNewestFirst(false); setLimit(0); setSel(preset.focusId); pendingFocus.current = preset.focusId; }
+    if (preset.focusId) { setSel(preset.focusId); pendingFocus.current = { id: preset.focusId, waited: false }; forceRender((n) => n + 1); }
   }, [preset?.n]);
   useEffect(() => {
-    if (!pendingFocus.current) return;
-    const row = rootRef.current?.querySelector(`tr[data-cid="${pendingFocus.current}"]`);
+    const p = pendingFocus.current;
+    if (!p) return;
+    // Lượt vẽ đầu còn bộ lọc cũ (dòng mới có thể đang lọt vào đó rồi rơi ra khi bộ lọc bị xoá): bỏ qua, đợi lượt sau
+    if (!p.waited) { p.waited = true; return; }
+    const row = rootRef.current?.querySelector(`tr[data-cid="${p.id}"]`);
     if (row) { row.scrollIntoView({ block: "center" }); pendingFocus.current = null; }
+    else if (limit !== 0) setLimit(0);            // dòng nằm ngoài trang hiện tại (vd đang xếp cũ → mới): hiện tất cả
   });
 
   const svc = (id) => data.services.find((s) => s.id === id);
