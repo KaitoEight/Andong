@@ -127,6 +127,30 @@ export function printDepositReceipt(dep, customer, opts = {}) {
   openPrintWindow("Phiếu thu tiền cọc", body, { css: A5_CSS, base: false, preview: opts.preview });
 }
 
+// ── Phiếu thu (A5): một đợt thu tiền của khách ─────────────────────────────────────────────
+// rc = { code, date, paid, method, note, staff }; customer = khách. Còn nợ = nợ sau đợt thu (nếu truyền vào).
+export function printReceipt(rc, customer, opts = {}) {
+  const blank = !rc;
+  const body = `<div class="v">
+    ${topBlock(`<b>Mẫu số 01 - TT</b><br/>${QD_LAW}<div style="margin-top:3px">Số phiếu: <b>${esc(rc?.code || "")}</b></div>`)}
+    <div class="v-title">PHIẾU THU</div>
+    <div class="v-sub">${longDate(blank ? null : rc.date)}</div>
+    <div class="v-row">${fld("Họ tên người nộp tiền:", customer?.name)}${fld("Mã khách hàng:", customer?.code)}</div>
+    <div class="v-row">${fld("Số điện thoại:", customer?.phone)}${fld("Hình thức thanh toán:", rc?.method)}</div>
+    <div class="v-row">${fld("Địa chỉ:", addressOf(customer))}</div>
+    <div class="v-row">${fld("Lý do nộp:", rc?.note)}</div>
+    <div class="v-row">${fld("Số tiền:", blank ? "" : fmtVND(rc.paid))}${opts.debt !== undefined && !blank ? fld("Còn nợ:", fmtVND(opts.debt)) : ""}</div>
+    <div class="v-row">${fld("(Viết bằng chữ)", blank ? "" : moneyToWordsVi(rc.paid))}</div>
+    <div class="v-sign">
+      <div>Người nộp tiền<small>(ký, họ tên)</small><div class="gap"></div>${esc(customer?.name || "")}</div>
+      <div>Người lập phiếu<small>(ký, họ tên)</small><div class="gap"></div>${esc(rc?.staff || "")}</div>
+      <div>Kế Toán Trưởng<small>(ký, họ tên)</small><div class="gap"></div></div>
+    </div>
+    <div class="v-thanks" style="margin-top:10px">Cảm ơn quý khách và hẹn gặp lại !</div>
+  </div>`;
+  openPrintWindow(blank ? "Phiếu thu (mẫu trống)" : `Phiếu thu ${rc.code || ""}`, body, { css: A5_CSS, base: false, preview: opts.preview });
+}
+
 // ── Phiếu chi (A5) ──────────────────────────────────────────────────────────────────────────
 export function printPaymentVoucher(pv, opts = {}) {
   const blank = !pv;
@@ -334,6 +358,10 @@ export const PRINT_FORMS = [
     desc: "Phiếu thu tiền cọc của khách, có dòng viết số tiền bằng chữ.",
     sample: (o) => printDepositReceipt({ code: "PTC000001", date: todayStr(), method: "Tiền mặt", content: "Cọc lịch hẹn", amount: 500000 }, SAMPLE_CUSTOMER, o),
     blank: (o) => printDepositReceipt(null, null, o) },
+  { id: "receipt", name: "Phiếu thu (A5)", icon: "🧾", where: "Hồ sơ khách → Thanh Toán → nút in ở mỗi đợt thu",
+    desc: "Phiếu thu tiền của khách cho từng đợt thanh toán, có số tiền bằng chữ.",
+    sample: (o) => printReceipt({ code: "HD20261109.001", date: todayStr(), paid: 1500000, method: "Chuyển khoản", note: "Thanh toán chi phí dịch vụ nha khoa", staff: "Lễ tân" }, SAMPLE_CUSTOMER, { ...o, debt: 800000 }),
+    blank: (o) => printReceipt(null, null, o) },
   { id: "payment-voucher", name: "Phiếu chi (A5)", icon: "📤", where: "In mẫu trống để viết tay",
     desc: "Phiếu chi tiền: người nhận, lý do, số tiền, chữ ký giám đốc / kế toán / thủ quỹ.",
     sample: (o) => printPaymentVoucher({ code: "PC000001", date: todayStr(), receiver: "Nguyễn Văn B", reason: "Mua vật tư nha khoa", amount: 1250000, note: "", attached: "1 hóa đơn", original: "HĐ 0001234" }, o),

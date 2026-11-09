@@ -8,6 +8,7 @@ import Field, { inputCls, btnPrimary } from "./ui/Field";
 import { uid, todayStr, fmtDate, fmtVND } from "../utils/helpers";
 import { confirmAndArchive } from "../utils/trash";
 import { CLINIC } from "../utils/print";
+import { printReceipt } from "../utils/printForms";
 import { invoiceStatus } from "../utils/finance";
 
 export default function CustomerPaymentTab({ data, setData, customer }) {
@@ -344,7 +345,7 @@ export default function CustomerPaymentTab({ data, setData, customer }) {
               <div>Người lập phiếu<br /><br /><b className="text-slate-800">{printModal.invoice.staff}</b></div>
             </div>
 
-            <button onClick={() => window.print()} className={btnPrimary + " w-full justify-center mt-4"}>
+            <button onClick={() => printReceipt(printModal.invoice, customer, { debt: totalDebt })} className={btnPrimary + " w-full justify-center mt-4"}>
               <Printer size={16} /> In Phiếu Thu (Print)
             </button>
           </div>
