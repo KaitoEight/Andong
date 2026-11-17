@@ -22,6 +22,7 @@ import Accounting     from "./src/components/Accounting";
 import Invoices        from "./src/components/Invoices";
 import Staff          from "./src/components/Staff";
 import Marketing      from "./src/components/Marketing";
+import CustomerExport from "./src/components/CustomerExport";
 import Prescription   from "./src/components/Prescription";
 import Warehouse      from "./src/components/Warehouse";
 import Integration    from "./src/components/Integration";
@@ -304,6 +305,8 @@ export default function App() {
       case "mk-discount":
       case "mk-filter":
         return <Marketing data={safeData} setData={setData} view={view} openAdd={setAdding} registerAdd={reg} />;
+      case "mk-export":
+        return <CustomerExport data={safeData} />;
 
       // ── Tích Hợp ──────────────────────────────────────────────────────────
       case "int-sms":

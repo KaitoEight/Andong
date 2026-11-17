@@ -86,6 +86,7 @@ export const NAV = [
     children: [
       { key: "mk-discount", label: "Khuyến Mãi",    addable: false },
       { key: "mk-filter",   label: "Lọc Khách Hàng", addable: false },
+      { key: "mk-export",   label: "Xuất Dữ Liệu KH", addable: false },
     ],
   },
   {
@@ -162,6 +163,7 @@ export const VIEW_PATHS = {
   "wh-setting":     "/warehouse/setting/",
   "mk-discount":    "/marketing/discount/",
   "mk-filter":      "/marketing/filtercustomer/",
+  "mk-export":      "/marketing/exportcustomer/",
   "int-sms":        "/integration/smszns/",
   "int-call":       "/integration/callhistory/",
   "int-voip":       "/integration/voip/",
